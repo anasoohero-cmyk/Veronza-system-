@@ -1,4 +1,4 @@
-const CACHE_NAME = 'veronza-shell-v5';
+const CACHE_NAME = 'veronza-shell-v8';
 const APP_SHELL = [
   './',
   './index.html',
@@ -28,10 +28,9 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // For HTML/navigation, prefer the network so a fresh deployment is picked up.
   if (req.mode === 'navigate' || req.destination === 'document') {
     event.respondWith(
-      fetch(req, {cache:'no-store'})
+      fetch(new Request(req, {cache:'no-store'}))
         .then(res => {
           const copy = res.clone();
           caches.open(CACHE_NAME).then(c => c.put('./index.html', copy));
@@ -42,21 +41,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Static assets: cache first, then refresh the cache from network.
   event.respondWith(
-    caches.match(req).then(cached => {
-      const network = fetch(req).then(res => {
-        if (res && res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(req, copy));
-        }
-        return res;
-      }).catch(() => cached);
-      return cached || network;
-    })
+    caches.match(req).then(cached =>
+      fetch(new Request(req, {cache:'no-store'}))
+        .then(res => {
+          if(res && res.ok){
+            const copy=res.clone();
+            caches.open(CACHE_NAME).then(c=>c.put(req,copy));
+          }
+          return res;
+        })
+        .catch(()=>cached)
+    )
   );
 });
 
 self.addEventListener('message', event => {
-  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+  if(event.data==='SKIP_WAITING') self.skipWaiting();
 });

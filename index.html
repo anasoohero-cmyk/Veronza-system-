@@ -401,6 +401,15 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 }
 @media(min-width:761px){.vz-menu-overlay{display:none!important}}
 </style>
+
+<style id="veronza-launch-update">
+#vz-update-status{position:fixed;z-index:10060;top:10px;left:50%;
+transform:translate(-50%,-60px);opacity:0;pointer-events:none;
+background:#4b2148;color:#fff;border-radius:18px;padding:8px 13px;
+font:800 10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+box-shadow:0 8px 22px rgba(40,20,38,.2);transition:.2s ease}
+#vz-update-status.show{transform:translate(-50%,0);opacity:1}
+</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
@@ -702,6 +711,54 @@ function vzGo(id){
     b.classList.toggle('active',b.dataset.menuView===id);
   });
 }
+</script>
+
+<div id="vz-update-status">جارِ التحقق من التحديث…</div>
+<script id="veronza-launch-update">
+(function(){
+  if(window.__vzLaunchUpdate)return;
+  window.__vzLaunchUpdate=true;
+  var status=document.getElementById('vz-update-status');
+  var start=Date.now();
+
+  function msg(t,show){
+    if(!status)return;
+    status.textContent=t;
+    status.classList.toggle('show',!!show);
+  }
+
+  async function check(){
+    if(!navigator.serviceWorker)return;
+    try{
+      var reg=await navigator.serviceWorker.getRegistration('./sw.js');
+      if(!reg) reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+
+      // Bypass browser/SW HTTP caches for the worker script itself.
+      await reg.update();
+
+      if(reg.waiting){
+        reg.waiting.postMessage('SKIP_WAITING');
+      }
+    }catch(e){
+      console.warn('Veronza launch update:',e);
+    }
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    // Avoid an endless reload loop.
+    if(Date.now()-start<30000){
+      location.reload();
+    }
+  });
+
+  // Run immediately when the installed PWA opens, and again when it returns
+  // to the foreground. This is the closest reliable PWA behavior available
+  // on iOS; iOS still controls when the OS wakes the service worker.
+  check();
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible') check();
+  });
+})();
 </script>
 </body>
 </html>
