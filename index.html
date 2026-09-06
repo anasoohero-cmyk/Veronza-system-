@@ -70,6 +70,9 @@ th{color:#756c63;background:#f6f0e7}th,td{padding:12px;border-bottom:1px solid #
  .quick{grid-template-columns:1fr}.nav button{padding:10px 13px}
 }
 @media(max-width:430px){.heroArt{opacity:.55;width:52%}.heroText{max-width:75%}.heroText h2{font-size:32px}.cards{gap:8px}.card{border-radius:17px}}
+.dashboard-extra{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.dashbox{background:rgba(255,253,249,.96);border:1px solid var(--line);border-radius:21px;padding:18px;box-shadow:var(--shadow)}.dashbox-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.dashbox-head h3{margin:0;font-size:18px}.dashbox-head .arrow{color:#a17a3d;font-size:20px}.monthValue{font-size:32px;font-weight:900;margin:4px 0}.monthSub{color:var(--success);font-size:12px}.recent-table{width:100%;border-collapse:collapse}.recent-table th,.recent-table td{padding:9px 6px;border-bottom:1px solid #eee5d9;font-size:12px;text-align:right}.recent-table th{background:#f6f0e7;color:#756c63}.recent-table tr:last-child td{border-bottom:0}.empty-small{padding:16px;text-align:center;color:#8b837a;font-size:13px}
+@media(max-width:760px){.dashboard-extra{grid-template-columns:1fr}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -107,7 +110,11 @@ select{border:1px solid var(--line);background:#fffdf9;padding:12px;border-radiu
   <div class="card"><div class="ico">▣</div><span>عدد المنتجات</span><b id="statProducts">0</b></div>
   <div class="card"><div class="ico">♙</div><span>أصناف منخفضة</span><b id="statLow">0</b></div>
  </div>
- <div class="panel alert"><h3>⚠️ تنبيه المخزون المنخفض</h3><div id="lowList" class="empty">لا توجد أصناف منخفضة.</div></div>
+ <div class="panel alert"><h3>⚠️ تنبيه المخزون المنخفض <span id="lowCount" class="badge">0</span></h3><div id="lowList" class="empty">لا توجد أصناف منخفضة.</div></div>
+ <div class="dashboard-extra">
+  <div class="dashbox"><div class="dashbox-head"><h3>🧳 مبيعات هذا الشهر</h3><span class="arrow">›</span></div><div id="monthSales" class="monthValue">0 د.ل</div><div id="monthTrend" class="monthSub">هذا الشهر</div></div>
+  <div class="dashbox"><div class="dashbox-head"><h3>🕒 أحدث العمليات</h3><button class="sortbtn" onclick="showView('sales')">عرض الكل</button></div><div class="tablewrap"><table class="recent-table"><thead><tr><th>التاريخ</th><th>النوع</th><th>الاسم / المنتج</th><th>القيمة</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-small">لا توجد عمليات</td></tr></tbody></table></div></div>
+ </div>
  <div class="quick">
   <button class="mainq" onclick="showView('products')">＋ <b>إضافة منتج جديد</b><br><small>تسجيل منتج في المخزون</small></button>
   <button class="goldq" onclick="showView('sales')">🛒 <b>إجراء عملية بيع</b><br><small>بيع سريع وسهل</small></button>
