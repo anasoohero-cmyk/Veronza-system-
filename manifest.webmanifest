@@ -1,15 +1,11 @@
 {
-  "name": "Veronza | Shoes & Bag",
+  "name": "Veronza",
   "short_name": "Veronza",
-  "description": "نظام إدارة Veronza للمخزون والمبيعات والطلبات والعملاء",
-  "lang": "ar",
-  "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#f5f0e8",
-  "theme_color": "#171513",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
   "icons": [
     {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
     {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
