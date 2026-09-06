@@ -83,6 +83,25 @@ select{border:1px solid var(--line);background:#fffdf9;padding:12px;border-radiu
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Veronza">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<style id="veronza-responsive-fix">
+html,body{width:100%;min-width:0;overflow-x:hidden}
+.top,.topbar,.nav,main{width:100%;max-width:none}
+.topbar,.nav,main{box-sizing:border-box}
+@media(max-width:760px){
+  .top{padding-left:12px;padding-right:12px}
+  .topbar{margin:0;width:100%}
+  .nav{margin-left:0;margin-right:0;width:100%;padding-left:0;padding-right:0}
+  main{margin:0;width:100%;padding:12px}
+  .hero{width:100%;min-width:0}
+  .cards{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{min-width:0}
+  .dashboard-extra{width:100%;grid-template-columns:1fr}
+}
+@media(min-width:761px){
+  .topbar,.nav,main{max-width:1180px}
+}
+</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
