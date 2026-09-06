@@ -511,6 +511,17 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
     <div class="order-row"><div class="order-icon">🛒</div><div><b>عملية بيع</b><small>تم تسجيلها في النظام</small></div><span class="pill pending">قيد المتابعة</span><b>›</b></div>
   </div>
 
+
+  <div id="vzRegisterPasskeyCard" class="panel" style="margin-top:18px;border:1px solid rgba(184,145,67,.45);background:linear-gradient(135deg,#fffdf8,#f8f1e4);box-shadow:0 10px 28px rgba(60,35,55,.08);">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:5px;">🔐 الدخول السريع بـ Face ID</div>
+        <div style="font-size:14px;color:#766d72;line-height:1.7;">فعّل Face ID مرة واحدة، وبعدها تقدر تدخل لحسابك بسرعة بدون كتابة البريد وكلمة المرور.</div>
+      </div>
+      <button class="primary" type="button" onclick="registerVeronzaPasskey()" style="min-width:210px;">تفعيل الدخول بـ Face ID</button>
+    </div>
+  </div>
+
   <div class="quick-bottom">
     <button class="primary" onclick="showView('products')">＋ إضافة منتج جديد<br><small>تسجيل منتج في المخزون</small></button>
     <button class="gold" onclick="showView('sales')">🛒 إجراء عملية بيع<br><small>بيع سريع وسهل</small></button>
