@@ -73,7 +73,7 @@ function renderAll(){
  $('statSales').textContent=money(todays.reduce((s,x)=>s+(+x.total||0),0));
  let lows=products.filter(p=>p.qty<=p.min);
  $('statLow').textContent=lows.length;
- $('lowList').innerHTML=lows.length?lows.map(p=>`<div class="badge low">${p.name} — المتبقي ${p.qty}</div>`).join(' '):'لا توجد أصناف منخفضة.';
+ if($('lowList'))$('lowList').innerHTML=lows.length?lows.map(p=>`<div class="badge low">${p.name} — المتبقي ${p.qty}</div>`).join(' '):'لا توجد أصناف منخفضة.';
  if($('lowCount'))$('lowCount').textContent=lows.length;
  renderProducts();
  $('salesRows').innerHTML=sales.slice(0,30).map(s=>`<tr><td>${new Date(s.created_at).toLocaleString('ar-LY')}</td><td>${s.product}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.customer||'-'}</td></tr>`).join('')||`<tr><td colspan="5" class="empty">لا توجد مبيعات</td></tr>`;

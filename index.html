@@ -411,6 +411,11 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
     <button class="status-card" onclick="showView('customers')"><span class="si">👥</span><small>العملاء</small><b id="dashCustomers">0</b></button>
   </div>
 
+  <div class="section-card low-stock-panel">
+    <div class="section-head"><h3>⚠️ المخزون المنخفض <span id="lowCount" class="badge">0</span></h3><button onclick="showView('products')">عرض الكل</button></div>
+    <div id="lowList" style="display:flex;flex-wrap:wrap;gap:7px">لا توجد أصناف منخفضة.</div>
+  </div>
+
   <div class="section-card">
     <div class="section-head"><h3>أحدث المنتجات</h3><button onclick="showView('products')">عرض الكل</button></div>
     <div class="product-strip">
