@@ -402,14 +402,7 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 @media(min-width:761px){.vz-menu-overlay{display:none!important}}
 </style>
 
-<style id="veronza-launch-update">
-#vz-update-status{position:fixed;z-index:10060;top:10px;left:50%;
-transform:translate(-50%,-60px);opacity:0;pointer-events:none;
-background:#4b2148;color:#fff;border-radius:18px;padding:8px 13px;
-font:800 10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-box-shadow:0 8px 22px rgba(40,20,38,.2);transition:.2s ease}
-#vz-update-status.show{transform:translate(-50%,0);opacity:1}
-</style>
+
 
 <style id="veronza-safari-refresh">
 #vzPullIndicator{
@@ -550,7 +543,7 @@ box-shadow:0 8px 22px rgba(40,20,38,.2);transition:.2s ease}
 <section id="customers" class="view"><h2>العملاء</h2><div class="panel"><div class="grid"><input id="cName" placeholder="اسم العميل"><input id="cPhone" placeholder="الهاتف"><input id="cAddress" placeholder="العنوان"><input id="cNotes" placeholder="ملاحظات"><button class="primary" onclick="addCustomer()">إضافة عميل</button></div><div class="filters"><input id="customerSearch" placeholder="🔎 بحث باسم أو هاتف" oninput="renderCustomers()"><button onclick="clearCustomerFilter()">مسح الفلاتر</button></div><div class="tablewrap"><table><thead><tr><th><button class="sortbtn" onclick="sortCustomers('name')">الاسم ↕</button></th><th>الهاتف</th><th><button class="sortbtn" onclick="sortCustomers('orders')">عدد الطلبات ↕</button></th><th><button class="sortbtn" onclick="sortCustomers('total_purchases')">إجمالي المشتريات ↕</button></th><th><button class="sortbtn" onclick="sortCustomers('last_purchase_at')">آخر عملية شراء ↕</button></th></tr></thead><tbody id="customerRows"></tbody></table></div></div></section>
 <section id="suppliers" class="view"><h2>الموردون</h2><div class="panel"><div class="grid"><input id="sName" placeholder="اسم المورد"><input id="sPhone" placeholder="الهاتف"><button class="primary" onclick="addSupplier()">إضافة مورد</button></div><div class="tablewrap"><table><thead><tr><th>المورد</th><th>الهاتف</th></tr></thead><tbody id="supplierRows"></tbody></table></div></div></section>
 <section id="reports" class="view"><h2>التقارير</h2><div class="cards"><div class="card"><span>إجمالي المبيعات</span><b id="repSales">0</b></div><div class="card"><span>إجمالي الربح</span><b id="repProfit">0</b></div><div class="card"><span>عدد القطع المباعة</span><b id="repQty">0</b></div></div><div class="panel"><h3>مبيعات حسب المنتج</h3><div id="reportList"></div></div></section>
-<div style="display:none"><span id="repSales">0</span><span id="repProfit">0</span><span id="repQty">0</span></div>
+<div style="display:none"></div>
 <div class="footer">Veronza — Shoes & Bag<br>كل خطوة نحو نجاح أكبر</div>
 
 
@@ -567,45 +560,7 @@ box-shadow:0 8px 22px rgba(40,20,38,.2);transition:.2s ease}
 <script src="app.js"></script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
 
-<script id="veronza-auto-update">
-(function(){
-  if (!('serviceWorker' in navigator)) return;
 
-  let reloading = false;
-
-  function reloadOnce(){
-    if (reloading) return;
-    reloading = true;
-    setTimeout(function(){ location.reload(); }, 250);
-  }
-
-  navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'})
-    .then(function(reg){
-      // Ask the browser for the newest worker as soon as the app opens.
-      reg.update().catch(function(){});
-
-      reg.addEventListener('updatefound', function(){
-        const worker = reg.installing;
-        if (!worker) return;
-        worker.addEventListener('statechange', function(){
-          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-            worker.postMessage('SKIP_WAITING');
-          }
-        });
-      });
-    })
-    .catch(function(){});
-
-  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
-
-  document.addEventListener('visibilitychange', function(){
-    if (document.visibilityState !== 'visible') return;
-    navigator.serviceWorker.getRegistration('./sw.js')
-      .then(function(reg){ if (reg) reg.update().catch(function(){}); })
-      .catch(function(){});
-  });
-})();
-</script>
 
 
 <script id="veronza-refresh-bridge">
@@ -640,7 +595,7 @@ window.veronzaRefreshData = async function(){
 </script>
 
 <div id="vp-pull-indicator"><span class="spin">↻</span><span id="vp-pull-text">اسحب للتحديث</span></div>
-<script id="veronza-pull-refresh">
+<script id="veronza-pull-refresh-script">
 (function(){
   var startY=0, pulling=false, busy=false, threshold=65;
   var box=document.getElementById('vp-pull-indicator');
@@ -739,52 +694,7 @@ function vzGo(id){
 </script>
 
 <div id="vz-update-status">جارِ التحقق من التحديث…</div>
-<script id="veronza-launch-update">
-(function(){
-  if(window.__vzLaunchUpdate)return;
-  window.__vzLaunchUpdate=true;
-  var status=document.getElementById('vz-update-status');
-  var start=Date.now();
 
-  function msg(t,show){
-    if(!status)return;
-    status.textContent=t;
-    status.classList.toggle('show',!!show);
-  }
-
-  async function check(){
-    if(!navigator.serviceWorker)return;
-    try{
-      var reg=await navigator.serviceWorker.getRegistration('./sw.js');
-      if(!reg) reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
-
-      // Bypass browser/SW HTTP caches for the worker script itself.
-      await reg.update();
-
-      if(reg.waiting){
-        reg.waiting.postMessage('SKIP_WAITING');
-      }
-    }catch(e){
-      console.warn('Veronza launch update:',e);
-    }
-  }
-
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    // Avoid an endless reload loop.
-    if(Date.now()-start<30000){
-      location.reload();
-    }
-  });
-
-  // Run immediately when the installed PWA opens, and again when it returns
-  // to the foreground. This is the closest reliable PWA behavior available
-  // on iOS; iOS still controls when the OS wakes the service worker.
-  check();
-  document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible') check();
-  });
-})();
-</script>
 <div id="vzPullIndicator"><div class="vz-ring"></div></div><div id="vzPullText">اسحب للتحديث</div>
 <script id="veronza-safari-refresh-script">
 (function(){
@@ -822,6 +732,59 @@ function vzGo(id){
    if(i){i.classList.remove('vz-refresh');i.style.opacity=0;i.style.transform='translate(-50%,-130%)'}
    if(t){t.style.opacity=0;t.textContent='اسحب للتحديث'}
  }
+})();
+</script>
+
+<style id="veronza-update-notice-style">
+#veronzaUpdateNotice{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.48);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top) + 22px) 16px 20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.vz-update-card{width:min(420px,100%);background:#fff;border-radius:22px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);direction:rtl;text-align:right;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
+.vz-update-title{font-size:20px;font-weight:800;margin-bottom:8px;color:#151515}
+.vz-update-msg{font-size:14px;line-height:1.7;color:#666;margin-bottom:16px}
+#vzApplyUpdate{width:100%;border:0;border-radius:13px;padding:13px 16px;background:#111;color:#fff;font-size:15px;font-weight:800}
+</style>
+<script id="veronza-launch-update">
+(function(){
+  let updating=false;
+  function showUpdateNotice(){
+    if(document.getElementById('veronzaUpdateNotice'))return;
+    const box=document.createElement('div');
+    box.id='veronzaUpdateNotice';
+    box.innerHTML='<div class="vz-update-card"><div class="vz-update-title">تحديث جديد جاهز ✨</div><div class="vz-update-msg">تم العثور على نسخة جديدة من منظومة Veronza. حدّث الآن ثم ابدأ العمل.</div><button id="vzApplyUpdate">تحديث الآن</button></div>';
+    document.body.appendChild(box);
+    document.getElementById('vzApplyUpdate').onclick=function(){
+      const reg=window.__veronzaUpdateReg;
+      if(reg&&reg.waiting){
+        updating=true;
+        reg.waiting.postMessage({type:'SKIP_WAITING'});
+      }else{
+        window.location.reload();
+      }
+    };
+  }
+  async function checkVeronzaUpdate(){
+    if(updating||!('serviceWorker' in navigator))return;
+    try{
+      const reg=await navigator.serviceWorker.register('./sw.js?update=12',{updateViaCache:'none'});
+      window.__veronzaUpdateReg=reg;
+      if(reg.waiting)showUpdateNotice();
+      await reg.update();
+      if(reg.waiting)showUpdateNotice();
+      reg.addEventListener('updatefound',function(){
+        const worker=reg.installing;
+        if(!worker)return;
+        worker.addEventListener('statechange',function(){
+          if(worker.state==='installed'&&navigator.serviceWorker.controller)showUpdateNotice();
+        });
+      });
+    }catch(err){console.warn('Veronza update check:',err);}
+  }
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(updating)window.location.reload();
+  });
+  checkVeronzaUpdate();
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible')checkVeronzaUpdate();
+  });
 })();
 </script>
 </body>
