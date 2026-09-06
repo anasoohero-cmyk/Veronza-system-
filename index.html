@@ -337,6 +337,18 @@ main{max-width:980px!important;margin:auto!important;padding:15px!important}
 @media(min-width:761px){.vp-bottom-nav{display:none!important}}
 body{padding-bottom:94px!important}
 </style>
+
+
+
+<style id="veronza-pull-refresh">
+#vp-pull-indicator{position:fixed;z-index:10001;top:8px;left:50%;
+transform:translate(-50%,-70px);min-width:120px;height:38px;padding:0 14px;
+border-radius:20px;background:#4b2148;color:#fff;box-shadow:0 8px 24px rgba(40,20,38,.22);
+display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;font-weight:800;
+transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
+#vp-pull-indicator .spin{font-size:17px}.loading .spin{animation:vpSpin .8s linear infinite}
+@keyframes vpSpin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
@@ -463,5 +475,136 @@ body{padding-bottom:94px!important}
 
 <script src="app.js"></script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+
+<script id="veronza-auto-update">
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+
+  let reloading = false;
+
+  function reloadOnce(){
+    if (reloading) return;
+    reloading = true;
+    setTimeout(function(){ location.reload(); }, 250);
+  }
+
+  navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'})
+    .then(function(reg){
+      // Ask the browser for the newest worker as soon as the app opens.
+      reg.update().catch(function(){});
+
+      reg.addEventListener('updatefound', function(){
+        const worker = reg.installing;
+        if (!worker) return;
+        worker.addEventListener('statechange', function(){
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            worker.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+    })
+    .catch(function(){});
+
+  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState !== 'visible') return;
+    navigator.serviceWorker.getRegistration('./sw.js')
+      .then(function(reg){ if (reg) reg.update().catch(function(){}); })
+      .catch(function(){});
+  });
+})();
+</script>
+
+
+<script id="veronza-refresh-bridge">
+window.veronzaRefreshData = async function(){
+  try {
+    if (typeof window.loadAll === 'function') {
+      await window.loadAll();
+      return true;
+    }
+    if (typeof window.loadDashboard === 'function') {
+      await window.loadDashboard();
+      return true;
+    }
+    if (typeof window.refreshData === 'function') {
+      await window.refreshData();
+      return true;
+    }
+    if (typeof window.loadData === 'function') {
+      await window.loadData();
+      return true;
+    }
+    var active=document.querySelector('.view.active');
+    if(active && active.id && typeof window.showView==='function'){
+      window.showView(active.id);
+      return true;
+    }
+  } catch(e) {
+    console.warn('Veronza data refresh:',e);
+  }
+  return false;
+};
+</script>
+
+<div id="vp-pull-indicator"><span class="spin">↻</span><span id="vp-pull-text">اسحب للتحديث</span></div>
+<script id="veronza-pull-refresh">
+(function(){
+  var startY=0, pulling=false, busy=false, threshold=65;
+  var box=document.getElementById('vp-pull-indicator');
+  var label=document.getElementById('vp-pull-text');
+
+  function show(txt,loading){
+    box.style.opacity='1';
+    box.style.transform='translate(-50%,8px)';
+    box.classList.toggle('loading',!!loading);
+    label.textContent=txt;
+  }
+  function hide(){
+    box.style.opacity='0';
+    box.style.transform='translate(-50%,-70px)';
+    box.classList.remove('loading');
+  }
+  async function refresh(){
+    if(busy)return;
+    busy=true; show('جاري التحديث…',true);
+    try{
+      await window.veronzaRefreshData();
+      if(navigator.serviceWorker){
+        var reg=await navigator.serviceWorker.getRegistration('./sw.js');
+        if(reg) await reg.update();
+      }
+      show('تم التحديث ✓',false);
+    }catch(e){
+      console.warn(e); show('تم التحديث ✓',false);
+    }
+    setTimeout(function(){hide();busy=false},700);
+  }
+
+  document.addEventListener('touchstart',function(e){
+    if(busy || document.visibilityState!=='visible' || window.scrollY>2 ||
+       !e.touches || e.touches.length!==1)return;
+    startY=e.touches[0].clientY; pulling=true;
+  },{passive:true});
+
+  document.addEventListener('touchmove',function(e){
+    if(!pulling || busy || !e.touches || !e.touches.length)return;
+    var dy=e.touches[0].clientY-startY;
+    if(dy<8)return;
+    var p=Math.min(1,dy/threshold);
+    box.style.opacity=String(.2+.8*p);
+    box.style.transform='translate(-50%,'+Math.min(8,-60+68*p)+'px)';
+    label.textContent=dy>=threshold?'اترك للتحديث':'اسحب للتحديث';
+  },{passive:true});
+
+  document.addEventListener('touchend',function(e){
+    if(!pulling || busy)return;
+    var y=(e.changedTouches&&e.changedTouches.length)?e.changedTouches[0].clientY:startY;
+    var dy=y-startY; pulling=false;
+    if(dy>=threshold) refresh(); else hide();
+  },{passive:true});
+})();
+</script>
 </body>
 </html>
