@@ -103,44 +103,68 @@ html,body{width:100%;min-width:0;overflow-x:hidden}
 }
 </style>
 
-<style id="veronza-dashboard-match-final">
-*{box-sizing:border-box}
-html{width:100%;min-width:100%;margin:0;padding:0}
-body{width:100%;min-width:100%;margin:0;padding:0;overflow-x:hidden;direction:rtl}
-.top{width:100%!important;max-width:none!important;margin:0!important}
-.topbar{width:100%!important;max-width:1180px;margin:0 auto!important;box-sizing:border-box}
-.nav{width:100%!important;max-width:1180px;margin:14px auto 0!important;box-sizing:border-box}
-main{width:100%!important;max-width:1180px!important;margin:0 auto!important;padding:18px!important}
-#dashboard.view.active{width:100%!important;max-width:none!important}
-.hero{width:100%!important;min-height:245px;display:flex;flex-direction:row;align-items:stretch;overflow:hidden}
-.heroText{flex:1 1 52%;display:flex;flex-direction:column;justify-content:center;padding:28px!important;z-index:2}
-.heroArt{flex:1 1 48%;width:auto!important;min-width:0;min-height:245px;margin:0!important;background-position:center;background-size:cover;background-repeat:no-repeat}
-.cards{width:100%!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.card{min-width:0;border-radius:22px;padding:20px}
-.dashboard-extra{width:100%!important;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-.dashbox{min-width:0}
-@media(max-width:760px){
- .top{padding:18px 12px 14px!important}
- .topbar{max-width:none!important}
- .nav{max-width:none!important;margin-top:12px!important}
- main{max-width:none!important;padding:12px!important}
- .hero{min-height:245px!important;border-radius:25px!important}
- .heroText{padding:20px!important;flex:1 1 54%}
- .heroText h2{font-size:36px!important;margin:5px 0!important}
- .heroText p{font-size:17px!important}
- .heroArt{min-height:245px!important;flex:1 1 46%;opacity:1!important}
- .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
- .card{padding:16px!important;border-radius:20px!important}
- .card b{font-size:30px!important}
- .dashboard-extra{grid-template-columns:1fr!important;gap:12px!important}
-}
-@media(max-width:430px){
- .hero{min-height:205px!important}
- .heroText{padding:16px!important;flex-basis:55%}
- .heroText h2{font-size:32px!important}
- .heroArt{min-height:205px!important;flex-basis:45%}
+<style id="veronza-reference-match">
+/* Reference-style mobile dashboard: full-width, compact luxury layout */
+html,body{width:100%!important;min-width:0!important;max-width:none!important;overflow-x:hidden!important}
+body{background:#f5f0e8!important}
+.top{position:relative!important;width:100%!important;max-width:none!important;padding:16px 14px 12px!important}
+.topbar{width:100%!important;max-width:none!important;margin:0!important;gap:8px!important}
+.brand{min-width:0!important}
+.brand .mark{font-size:30px!important}
+.brand h1{font-size:29px!important}
+.brand small{font-size:9px!important;letter-spacing:3px!important}
+.brand em{font-size:11px!important}
+.iconbtn{width:48px!important;min-width:48px!important;height:48px!important;border-radius:15px!important}
+.nav{width:100%!important;max-width:none!important;margin:10px 0 0!important;gap:8px!important;padding:0 2px 2px!important}
+.nav button{padding:10px 15px!important;border-radius:15px!important;font-size:14px!important}
+main{width:100%!important;max-width:none!important;margin:0!important;padding:14px!important}
+.view.active{width:100%!important}
+.hero{width:100%!important;min-height:230px!important;height:230px!important;border-radius:24px!important;display:flex!important;align-items:stretch!important}
+.heroText{padding:22px 18px!important;width:58%!important;max-width:58%!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
+.heroText small{font-size:13px!important}
+.heroText h2{font-size:34px!important;line-height:1.05!important;margin:4px 0 8px!important}
+.heroText p{font-size:16px!important;line-height:1.45!important;margin:0 0 8px!important}
+.heroText span{font-size:16px!important}
+.heroArt{width:42%!important;min-height:230px!important;height:230px!important;margin:0!important;opacity:1!important;background-position:center!important;background-size:cover!important}
+h2{font-size:31px!important;margin:22px 2px 14px!important;line-height:1.15!important}
+.cards{width:100%!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin-top:0!important}
+.card{width:100%!important;min-width:0!important;min-height:180px!important;padding:16px!important;border-radius:20px!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important}
+.card .ico{width:48px!important;height:48px!important;border-radius:15px!important;margin:0 0 16px auto!important}
+.card span{font-size:15px!important;line-height:1.3!important}
+.card b{font-size:29px!important;line-height:1.15!important;margin-top:10px!important;word-break:break-word!important}
+.dashboard-extra{width:100%!important;display:grid!important;grid-template-columns:1fr!important;gap:10px!important;margin-top:10px!important}
+.dashbox{width:100%!important;border-radius:20px!important;padding:18px!important}
+.monthValue{font-size:31px!important}
+.panel{width:100%!important;border-radius:20px!important;padding:16px!important}
+.quick{width:100%!important;grid-template-columns:1fr!important}
+.footer{width:100%!important}
+@media(min-width:761px){
+  .topbar,.nav,main{max-width:1180px!important;margin-left:auto!important;margin-right:auto!important}
+  main{padding:18px!important}
+  .hero{height:auto!important;min-height:245px!important}
+  .heroText{width:auto!important;max-width:none!important}
+  .heroArt{width:48%!important;height:100%!important}
+  .dashboard-extra{grid-template-columns:1fr 1fr!important}
 }
 </style>
+
+<style>
+:root{--m-plum:#4a2448;--m-plum2:#612b5b;--m-soft:#f7f3f7;--m-line:#eadfea;--m-text:#241d25;--m-muted:#766b78;--m-gold:#b08b4f;--m-green:#1f9d67;--m-red:#df5d68}
+*{box-sizing:border-box} body{background:linear-gradient(180deg,#fff 0%,#faf7fa 100%);color:var(--m-text);font-family:Arial,"Noto Sans Arabic",sans-serif}
+.top{background:rgba(255,255,255,.96)!important;box-shadow:0 4px 18px rgba(74,36,72,.07)!important;position:sticky;top:0;z-index:20}.topbar{min-height:82px!important;padding:12px 18px!important}.brand h1{color:var(--m-plum)!important;font-size:26px!important}.brand small{color:#8b788a!important}.brand em{display:none!important}.brand .mark{background:var(--m-plum)!important}.user{display:none!important}.iconbtn{color:var(--m-plum)!important;background:#f7f1f7!important;border-color:#eadfea!important}.nav{display:flex!important;overflow-x:auto!important;gap:7px!important;padding:0 12px 12px!important;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}.nav button{flex:0 0 auto!important;border:1px solid var(--m-line)!important;background:#fff!important;color:var(--m-plum)!important;border-radius:13px!important;padding:10px 13px!important;font-weight:800!important}.nav button.active{background:var(--m-plum)!important;color:#fff!important;border-color:var(--m-plum)!important}
+main{max-width:760px!important;margin:auto!important;padding:14px 14px 34px!important}.view>h2{color:var(--m-plum)}
+.mobile-welcome{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #eee7ee;border-radius:24px;padding:16px;margin-bottom:12px;box-shadow:0 8px 25px rgba(74,36,72,.06)}.welcome-brand{display:flex;align-items:center;gap:12px}.brand-circle{width:54px;height:54px;border-radius:50%;background:var(--m-plum);color:#fff;display:grid;place-items:center;font-family:Georgia,serif;font-size:28px}.welcome-brand small,.welcome-brand span{display:block;color:var(--m-muted);font-size:11px}.welcome-brand strong{display:block;color:var(--m-plum);font-family:Georgia,serif;font-size:23px}.welcome-brand span{letter-spacing:2px}.account-mini{display:flex;flex-direction:column;align-items:flex-end;gap:5px;color:var(--m-muted);font-size:11px}.account-mini b{color:var(--m-green);font-size:18px}
+.quick-actions-mobile{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.quick-actions-mobile button{border:0;background:var(--m-plum);color:#fff;border-radius:18px;min-height:98px;padding:10px 5px;box-shadow:0 7px 16px rgba(74,36,72,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.quick-actions-mobile button span{font-size:24px}.quick-actions-mobile button b{font-size:12px}.quick-actions-mobile button small{font-size:9px;opacity:.78}
+.follow-card{background:linear-gradient(135deg,var(--m-plum),#66315f);color:#fff;border-radius:19px;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 9px 22px rgba(74,36,72,.15);margin:12px 0}.follow-card>div{display:flex;align-items:center;gap:11px}.follow-icon{width:36px;height:36px;border-radius:12px;background:#fff;color:var(--m-plum);display:grid;place-items:center;font-weight:900}.follow-card b{display:block;font-size:15px}.follow-card small{display:block;font-size:10px;opacity:.78;margin-top:3px}.follow-card>strong{font-size:28px;font-weight:400}
+.dashboard-title-row{display:flex;align-items:end;justify-content:space-between;margin:20px 3px 10px}.dashboard-title-row small{color:var(--m-muted);font-size:11px}.dashboard-title-row h2{margin:2px 0 0;color:var(--m-text);font-size:25px}.dashboard-title-row button,.section-head-modern button{border:0;background:none;color:var(--m-plum);font-weight:800;font-size:12px}
+.stat-grid-modern{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stat-modern{min-height:150px;border-radius:21px;padding:15px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;border:1px solid #eee7ef;background:#fff;box-shadow:0 7px 20px rgba(74,36,72,.06);position:relative;overflow:hidden}.stat-modern:after{content:"";position:absolute;width:75px;height:75px;border-radius:50%;right:-28px;bottom:-30px;background:#f4edf5}.stat-modern.low{background:#fff7f7}.stat-modern .stat-icon{width:39px;height:39px;border-radius:13px;background:#f4edf5;color:var(--m-plum);display:grid;place-items:center;font-size:19px;margin-bottom:14px}.stat-modern.low .stat-icon{background:#fdecef;color:var(--m-red)}.stat-modern.sales .stat-icon{background:#eaf8f1;color:var(--m-green)}.stat-modern.stockvalue .stat-icon{background:#fbf5e9;color:var(--m-gold)}.stat-modern small{font-size:12px;color:var(--m-muted)}.stat-modern b{font-size:27px;margin-top:5px;color:var(--m-text)}.stat-modern em{font-style:normal;font-size:10px;color:var(--m-muted)}
+.status-grid-modern{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}.status-grid-modern button{background:#fff;border:1px solid var(--m-line);border-radius:17px;padding:12px 5px;min-height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--m-text)}.status-grid-modern span{font-size:21px}.status-grid-modern b{font-size:10px;color:var(--m-muted)}.status-grid-modern strong{font-size:19px;color:var(--m-plum)}
+.monthly-card-modern{background:#fff;border:1px solid var(--m-line);border-radius:22px;padding:17px;margin:12px 0;overflow:hidden}.monthly-head{display:flex;align-items:center;justify-content:space-between}.monthly-head small{font-size:10px;color:var(--m-muted)}.monthly-head h3{margin:3px 0;font-size:16px}.monthly-head>span{width:35px;height:35px;border-radius:11px;background:#eaf8f1;color:var(--m-green);display:grid;place-items:center}.monthly-value{font-size:31px;font-weight:900;color:var(--m-plum);margin-top:8px}.monthly-sub{font-size:10px;color:var(--m-muted)}.fake-chart{height:46px;display:flex;align-items:end;gap:5px;margin-top:10px}.fake-chart i{display:block;flex:1;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#bca2b9,#e9dfe8);height:35%}.fake-chart i:nth-child(2){height:55%}.fake-chart i:nth-child(3){height:43%}.fake-chart i:nth-child(4){height:70%}.fake-chart i:nth-child(5){height:58%}.fake-chart i:nth-child(6){height:84%}.fake-chart i:nth-child(7){height:100%}
+.section-head-modern{display:flex;justify-content:space-between;align-items:center;margin:17px 3px 8px}.section-head-modern h3{font-size:16px;margin:0}.low-products-modern,.recent-modern{background:#fff;border:1px solid var(--m-line);border-radius:20px;padding:10px;overflow:hidden}.recent-modern .tablewrap{border:0;box-shadow:none;padding:0}.recent-modern table{font-size:11px}.recent-modern th{color:var(--m-muted)}.recent-modern td,.recent-modern th{padding:10px 6px}.low-products-modern .empty{padding:15px;text-align:center;color:var(--m-muted);font-size:12px}.bottom-actions-modern{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0 4px}.bottom-actions-modern button{min-height:94px;border-radius:20px;padding:14px;text-align:right;border:1px solid var(--m-line)}.bottom-actions-modern span{font-size:22px;display:block;margin-bottom:6px}.bottom-actions-modern b{display:block;font-size:14px}.bottom-actions-modern small{display:block;font-size:10px;margin-top:4px;color:var(--m-muted)}.dark-action{background:var(--m-plum);color:#fff;border-color:var(--m-plum)!important}.dark-action small{color:#eadfea}.light-action{background:#fff;color:var(--m-plum)}
+@media(max-width:520px){.topbar{min-height:68px!important}.brand h1{font-size:22px!important}.nav button{font-size:11px!important;padding:9px 11px!important}.quick-actions-mobile button{min-height:91px}.quick-actions-mobile button span{font-size:21px}.status-grid-modern{grid-template-columns:1fr 1fr}.stat-modern{min-height:145px}}
+@media(min-width:761px){main{max-width:900px!important}.quick-actions-mobile{grid-template-columns:repeat(4,1fr)}.stat-grid-modern{grid-template-columns:repeat(4,1fr)}.status-grid-modern{grid-template-columns:repeat(4,1fr)}}
+</style>
+
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
@@ -160,23 +184,50 @@ main{width:100%!important;max-width:1180px!important;margin:0 auto!important;pad
 
 <main>
 <section id="dashboard" class="view active">
- <div class="hero"><div class="heroText"><small>مرحباً بك في</small><h2>Veronza</h2><p>إدارة أسهل .. <b>لمبيعات أكبر</b></p><span>جودة · أناقة · ثقة</span></div><div class="heroArt"></div></div>
- <h2>لوحة التحكم</h2>
- <div class="cards">
-  <div class="card"><div class="ico">🛒</div><span>مبيعات اليوم</span><b id="statSales">0</b><div class="trend">↗ أداء اليوم</div></div>
-  <div class="card"><div class="ico">◇</div><span>قيمة المخزون</span><b id="statStock">0</b></div>
-  <div class="card"><div class="ico">▣</div><span>عدد المنتجات</span><b id="statProducts">0</b></div>
-  <div class="card"><div class="ico">♙</div><span>أصناف منخفضة</span><b id="statLow">0</b></div>
- </div>
- <div class="panel alert"><h3>⚠️ تنبيه المخزون المنخفض <span id="lowCount" class="badge">0</span></h3><div id="lowList" class="empty">لا توجد أصناف منخفضة.</div></div>
- <div class="dashboard-extra">
-  <div class="dashbox"><div class="dashbox-head"><h3>🧳 مبيعات هذا الشهر</h3><span class="arrow">›</span></div><div id="monthSales" class="monthValue">0 د.ل</div><div id="monthTrend" class="monthSub">هذا الشهر</div></div>
-  <div class="dashbox"><div class="dashbox-head"><h3>🕒 أحدث العمليات</h3><button class="sortbtn" onclick="showView('sales')">عرض الكل</button></div><div class="tablewrap"><table class="recent-table"><thead><tr><th>التاريخ</th><th>النوع</th><th>الاسم / المنتج</th><th>القيمة</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-small">لا توجد عمليات</td></tr></tbody></table></div></div>
- </div>
- <div class="quick">
-  <button class="mainq" onclick="showView('products')">＋ <b>إضافة منتج جديد</b><br><small>تسجيل منتج في المخزون</small></button>
-  <button class="goldq" onclick="showView('sales')">🛒 <b>إجراء عملية بيع</b><br><small>بيع سريع وسهل</small></button>
- </div>
+  <div class="mobile-welcome">
+    <div class="welcome-brand"><div class="brand-circle">V</div><div><small>مرحباً بك في</small><strong>Veronza</strong><span>SHOES & BAG</span></div></div>
+    <div class="account-mini"><span>حساب المالك</span><b>●</b></div>
+  </div>
+
+  <div class="quick-actions-mobile">
+    <button onclick="showView('sales')"><span>🛍</span><b>بيع جديد</b><small>عملية بيع سريعة</small></button>
+    <button onclick="showView('products')"><span>＋</span><b>إضافة منتج</b><small>إلى المخزون</small></button>
+    <button onclick="showView('orders')"><span>📦</span><b>أضف طلب</b><small>طلب وتوصيل</small></button>
+    <button onclick="startScan()"><span>⌁</span><b>مسح باركود</b><small>بالكاميرا</small></button>
+  </div>
+
+  <div class="follow-card" onclick="showView('orders')">
+    <div><span class="follow-icon">✓</span><div><b>طلبات تحتاج متابعتك</b><small>راجع الطلبات والتوصيل وحالات التسليم</small></div></div><strong>›</strong>
+  </div>
+
+  <div class="dashboard-title-row"><div><small>ملخص المنظومة</small><h2>لوحة التحكم</h2></div><button onclick="showView('reports')">التقارير ›</button></div>
+
+  <div class="stat-grid-modern">
+    <div class="stat-modern inventory"><span class="stat-icon">📦</span><small>المخزون المتوفر</small><b id="statProducts">0</b><em>منتج</em></div>
+    <div class="stat-modern low"><span class="stat-icon">⚠</span><small>مخزون منخفض</small><b id="statLow">0</b><em>يحتاج متابعة</em></div>
+    <div class="stat-modern sales"><span class="stat-icon">💰</span><small>مبيعات اليوم</small><b id="statSales">0</b><em>د.ل</em></div>
+    <div class="stat-modern stockvalue"><span class="stat-icon">◇</span><small>قيمة المخزون</small><b id="statStock">0</b><em>د.ل</em></div>
+  </div>
+
+  <div class="status-grid-modern">
+    <button onclick="showView('orders')"><span>🚚</span><b>قيد التوصيل</b><strong id="deliveryStat">0</strong></button>
+    <button onclick="showView('returns')"><span>↩</span><b>المرتجعات</b><strong id="returnStat">0</strong></button>
+    <button onclick="showView('customers')"><span>👥</span><b>العملاء</b><strong id="customerStat">0</strong></button>
+    <button onclick="showView('suppliers')"><span>🏷</span><b>الموردون</b><strong id="supplierStat">0</strong></button>
+  </div>
+
+  <div class="monthly-card-modern"><div class="monthly-head"><div><small>الأداء المالي</small><h3>مبيعات هذا الشهر</h3></div><span>↗</span></div><div id="monthSales" class="monthly-value">0 د.ل</div><div id="monthTrend" class="monthly-sub">هذا الشهر</div><div class="fake-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+
+  <div style="display:none"><span id="lowCount">0</span></div><div class="section-head-modern"><h3>⚠️ المخزون المنخفض</h3><button onclick="showView('products')">عرض الكل</button></div>
+  <div id="lowList" class="low-products-modern"><div class="empty">لا توجد أصناف منخفضة.</div></div>
+
+  <div class="section-head-modern"><h3>أحدث العمليات</h3><button onclick="showView('sales')">عرض الكل</button></div>
+  <div class="recent-modern"><div class="tablewrap"><table class="recent-table"><thead><tr><th>التاريخ</th><th>النوع</th><th>المنتج</th><th>القيمة</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-small">لا توجد عمليات</td></tr></tbody></table></div></div>
+
+  <div class="bottom-actions-modern">
+    <button class="dark-action" onclick="showView('products')"><span>＋</span><b>إضافة منتج جديد</b><small>تسجيل منتج في المخزون</small></button>
+    <button class="light-action" onclick="showView('orders')"><span>📦</span><b>إدارة الطلبات</b><small>متابعة الطلب والتوصيل</small></button>
+  </div>
 </section>
 
 <section id="products" class="view">
@@ -202,6 +253,7 @@ main{width:100%!important;max-width:1180px!important;margin:0 auto!important;pad
 <section id="customers" class="view"><h2>العملاء</h2><div class="panel"><div class="grid"><input id="cName" placeholder="اسم العميل"><input id="cPhone" placeholder="الهاتف"><input id="cAddress" placeholder="العنوان"><input id="cNotes" placeholder="ملاحظات"><button class="primary" onclick="addCustomer()">إضافة عميل</button></div><div class="filters"><input id="customerSearch" placeholder="🔎 بحث باسم أو هاتف" oninput="renderCustomers()"><button onclick="clearCustomerFilter()">مسح الفلاتر</button></div><div class="tablewrap"><table><thead><tr><th><button class="sortbtn" onclick="sortCustomers('name')">الاسم ↕</button></th><th>الهاتف</th><th><button class="sortbtn" onclick="sortCustomers('orders')">عدد الطلبات ↕</button></th><th><button class="sortbtn" onclick="sortCustomers('total_purchases')">إجمالي المشتريات ↕</button></th><th><button class="sortbtn" onclick="sortCustomers('last_purchase_at')">آخر عملية شراء ↕</button></th></tr></thead><tbody id="customerRows"></tbody></table></div></div></section>
 <section id="suppliers" class="view"><h2>الموردون</h2><div class="panel"><div class="grid"><input id="sName" placeholder="اسم المورد"><input id="sPhone" placeholder="الهاتف"><button class="primary" onclick="addSupplier()">إضافة مورد</button></div><div class="tablewrap"><table><thead><tr><th>المورد</th><th>الهاتف</th></tr></thead><tbody id="supplierRows"></tbody></table></div></div></section>
 <section id="reports" class="view"><h2>التقارير</h2><div class="cards"><div class="card"><span>إجمالي المبيعات</span><b id="repSales">0</b></div><div class="card"><span>إجمالي الربح</span><b id="repProfit">0</b></div><div class="card"><span>عدد القطع المباعة</span><b id="repQty">0</b></div></div><div class="panel"><h3>مبيعات حسب المنتج</h3><div id="reportList"></div></div></section>
+<div style="display:none"><span id="repSales">0</span><span id="repProfit">0</span><span id="repQty">0</span></div>
 <div class="footer">Veronza — Shoes & Bag<br>كل خطوة نحو نجاح أكبر</div>
 </main>
 
