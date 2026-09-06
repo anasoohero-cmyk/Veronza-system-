@@ -74,7 +74,7 @@ th{color:#756c63;background:#f6f0e7}th,td{padding:12px;border-bottom:1px solid #
 @media(max-width:760px){.dashboard-extra{grid-template-columns:1fr}}
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0"></script>
 <style>
 #setup,#login{position:fixed;inset:0;background:rgba(10,9,8,.88);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}.modal{width:min(520px,100%);background:#fffdf9;border-radius:26px;padding:24px;box-shadow:0 25px 70px rgba(0,0,0,.35);direction:rtl}.modal input{width:100%;margin:8px 0;padding:14px;border:1px solid #e3d7c5;border-radius:14px;font-size:15px}.modal .hint{font-size:12px;color:#81796f;line-height:1.7}.top .user{cursor:pointer}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#171513;color:#fff;padding:12px 18px;border-radius:14px;z-index:1000}.sortbtn{background:none;border:0;cursor:pointer;font-weight:700}.filters{display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:10px}.status{padding:5px 10px;border-radius:999px;background:#eee4d4;display:inline-block;font-size:12px}.danger{background:#f4dfdb!important;color:#8b2d25!important}@media(max-width:650px){.filters{grid-template-columns:1fr}.modal{padding:20px}}
 select{border:1px solid var(--line);background:#fffdf9;padding:12px;border-radius:14px;color:var(--ink)}\n</style><link rel="manifest" href="manifest.webmanifest">
@@ -431,7 +431,7 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
-<div id="login"><div class="modal"><h2>تسجيل الدخول إلى Veronza</h2><input id="loginEmail" type="email" placeholder="البريد الإلكتروني"><input id="loginPassword" type="password" placeholder="كلمة المرور"><button class="primary" style="width:100%;margin-top:8px" onclick="login()">دخول</button><button style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button><div id="loginMsg" class="hint"></div></div></div>
+<div id="login"><div class="modal"><h2>تسجيل الدخول إلى Veronza</h2><input id="loginEmail" type="email" placeholder="البريد الإلكتروني"><input id="loginPassword" type="password" placeholder="كلمة المرور"><button class="primary" style="width:100%;margin-top:8px" onclick="login()">دخول</button><button style="width:100%;margin-top:8px" onclick="loginPasskey()">🔐 دخول سريع بـ Face ID</button><button style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button><div id="loginMsg" class="hint"></div></div></div>
 <header class="top">
  <div class="topbar">
   <button  class="iconbtn vz-menu-btn" onclick="openVeronzaMenu()" aria-label="القائمة">☰</button>
