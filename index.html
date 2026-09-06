@@ -165,6 +165,178 @@ main{max-width:760px!important;margin:auto!important;padding:14px 14px 34px!impo
 @media(min-width:761px){main{max-width:900px!important}.quick-actions-mobile{grid-template-columns:repeat(4,1fr)}.stat-grid-modern{grid-template-columns:repeat(4,1fr)}.status-grid-modern{grid-template-columns:repeat(4,1fr)}}
 </style>
 
+
+
+
+
+<style id="veronza-professional-v4">
+:root{
+ --p:#4b2148;--p2:#672d61;--p3:#8a5b83;--ink:#211a22;--muted:#766c77;
+ --bg:#faf8fa;--card:#fff;--line:#e9e0e9;--gold:#b9965b;
+ --green:#1da66b;--red:#d95361;--orange:#dc8b35;--blue:#4b7fd1;
+}
+body{background:var(--bg)!important;color:var(--ink)!important}
+.top{background:rgba(255,255,255,.97)!important;border-bottom:1px solid var(--line)!important}
+.nav{
+ display:flex!important;gap:8px!important;overflow-x:auto!important;
+ padding:7px 10px 9px!important;scrollbar-width:none!important;
+}
+.nav::-webkit-scrollbar{display:none}
+.nav button{
+ flex:0 0 auto!important;white-space:nowrap!important;
+ border:1px solid var(--line)!important;background:#fff!important;
+ color:var(--p)!important;border-radius:14px!important;padding:10px 15px!important;
+ font-weight:800!important;font-size:12px!important;
+}
+.nav button.active{background:var(--p)!important;color:#fff!important;border-color:var(--p)!important}
+main{max-width:980px!important;margin:auto!important;padding:15px!important}
+.dashboard-shell{direction:rtl}
+.dashboard-title-row{
+ display:flex!important;align-items:end!important;justify-content:space-between!important;
+ margin:8px 0 12px!important;
+}
+.dashboard-title-row .eyebrow{color:var(--muted);font-size:10px}
+.dashboard-title-row h2{font-size:27px!important;margin:2px 0!important}
+.dashboard-title-row button{
+ background:#fff!important;border:1px solid #ddcfb9!important;color:var(--p)!important;
+ border-radius:14px!important;padding:11px 15px!important;font-weight:800!important
+}
+.welcome-card{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;background:#fff!important;border:1px solid var(--line)!important;
+ border-radius:24px!important;padding:17px!important;box-shadow:0 10px 28px rgba(72,33,68,.07)!important;
+}
+.welcome-card .brandmark{
+ width:60px!important;height:60px!important;border-radius:50%!important;
+ background:var(--p)!important;color:#fff!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;font:34px Georgia,serif!important;
+}
+.welcome-card h3{color:var(--p)!important;font:700 24px Georgia,serif!important;margin:0!important}
+.welcome-card small{color:var(--muted)!important}
+.action-grid{
+ display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:10px!important;margin:12px 0!important
+}
+.action-card{
+ min-height:105px!important;border:0!important;border-radius:19px!important;
+ background:linear-gradient(145deg,var(--p),var(--p2))!important;color:#fff!important;
+ box-shadow:0 9px 20px rgba(72,33,68,.15)!important;padding:13px!important;
+ display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;
+}
+.action-card .aicon{font-size:25px!important;margin-bottom:7px}
+.action-card b{font-size:13px!important}.action-card small{font-size:9px!important;opacity:.8}
+.follow-card{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ background:linear-gradient(135deg,var(--p),#71366a)!important;color:#fff!important;
+ border-radius:20px!important;padding:15px 17px!important;margin:10px 0 18px!important;
+ box-shadow:0 10px 25px rgba(72,33,68,.16)!important
+}
+.follow-card .check{background:#fff;color:var(--p);width:46px;height:46px;border-radius:14px;
+ display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900}
+.stat-grid{
+ display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:10px!important
+}
+.stat{
+ background:#fff!important;border:1px solid var(--line)!important;border-radius:20px!important;
+ min-height:132px!important;padding:15px!important;box-shadow:0 7px 20px rgba(72,33,68,.055)!important
+}
+.stat .icon{width:40px;height:40px;border-radius:13px;background:#f4edf5;color:var(--p);
+ display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px}
+.stat small{display:block;color:var(--muted);font-size:10px}.stat b{font-size:25px;display:block;margin-top:6px}
+.stat em{font-style:normal;font-size:9px;color:var(--muted)}
+.stat.good .icon{background:#eaf8f1;color:var(--green)}
+.stat.warn{background:#fffafa}.stat.warn .icon{background:#fdecef;color:var(--red)}
+.stat.money .icon{background:#fbf5e8;color:var(--gold)}
+.status-grid{
+ display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:9px!important;margin-top:10px!important
+}
+.status-card{
+ background:#fff;border:1px solid var(--line);border-radius:18px;padding:13px!important;
+ text-align:center;box-shadow:0 5px 15px rgba(72,33,68,.045)
+}
+.status-card .si{font-size:20px}.status-card small{display:block;color:var(--muted);font-size:9px;margin-top:5px}
+.status-card b{font-size:21px;color:var(--p)}
+.section-card{
+ background:#fff;border:1px solid var(--line);border-radius:21px;padding:15px!important;
+ margin-top:12px!important;box-shadow:0 7px 20px rgba(72,33,68,.055)
+}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.section-head h3{margin:0;font-size:16px}.section-head button{background:none;border:0;color:var(--p);font-weight:800}
+.product-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.product-mini{border:1px solid var(--line);border-radius:15px;padding:9px;background:#fff}
+.product-mini .photo{height:75px;border-radius:12px;background:#f7f3f7;display:flex;align-items:center;justify-content:center;font-size:34px}
+.product-mini b{display:block;font-size:10px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.product-mini small{font-size:8px;color:var(--muted)}
+.stock-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:3px}
+.stock-dot.low{background:var(--red)}.stock-dot.mid{background:var(--orange)}
+.order-row{
+ display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;
+ border:1px solid var(--line);border-radius:15px;padding:11px;margin-top:7px
+}
+.order-icon{width:38px;height:38px;border-radius:11px;background:#f4edf5;color:var(--p);display:flex;align-items:center;justify-content:center}
+.order-row b{font-size:11px}.order-row small{display:block;color:var(--muted);font-size:8px;margin-top:3px}
+.pill{border-radius:999px;padding:5px 8px;font-size:8px;font-weight:800;background:#eaf8f1;color:var(--green)}
+.pill.pending{background:#fff3df;color:#a96a19}.pill.return{background:#fdecef;color:var(--red)}
+.quick-bottom{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.quick-bottom button{min-height:88px;border-radius:19px!important;font-weight:900!important}
+@media(max-width:760px){
+ .action-grid{grid-template-columns:repeat(2,1fr)!important}
+ .stat-grid{grid-template-columns:repeat(2,1fr)!important}
+ .status-grid{grid-template-columns:repeat(2,1fr)!important}
+ .product-strip{grid-template-columns:repeat(2,1fr)}
+}
+@media(min-width:761px){
+ .vp-bottom-nav{display:none!important}
+}
+</style>
+
+
+<style id="veronza-bottom-nav-fix">
+.vp-bottom-nav{
+  position:fixed!important;
+  z-index:9999!important;
+  left:10px!important;
+  right:10px!important;
+  bottom:10px!important;
+  height:66px!important;
+  border:1px solid #e9e0e9!important;
+  border-radius:22px!important;
+  background:rgba(255,255,255,.96)!important;
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+  box-shadow:0 12px 35px rgba(38,24,38,.16)!important;
+  display:grid!important;
+  grid-template-columns:repeat(5,1fr)!important;
+  align-items:center!important;
+  padding:5px!important;
+  direction:rtl!important;
+}
+.vp-bottom-nav button{
+  height:56px!important;
+  border:0!important;
+  background:transparent!important;
+  color:#766c77!important;
+  border-radius:17px!important;
+  padding:4px 2px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:2px!important;
+  font-size:9px!important;
+  font-weight:800!important;
+}
+.vp-bottom-nav button span{font-size:20px!important;line-height:1!important}
+.vp-bottom-nav button.active{background:#4b2148!important;color:#fff!important}
+.vp-bottom-nav .vp-scan{
+  width:56px!important;height:56px!important;border-radius:50%!important;
+  margin:-22px auto 0!important;
+  background:#4b2148!important;color:#fff!important;
+  border:5px solid #fff!important;
+  box-shadow:0 7px 18px rgba(72,32,68,.22)!important;
+}
+@media(min-width:761px){.vp-bottom-nav{display:none!important}}
+body{padding-bottom:94px!important}
+</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
@@ -183,52 +355,74 @@ main{max-width:760px!important;margin:auto!important;padding:14px 14px 34px!impo
 </header>
 
 <main>
+
 <section id="dashboard" class="view active">
-  <div class="mobile-welcome">
-    <div class="welcome-brand"><div class="brand-circle">V</div><div><small>مرحباً بك في</small><strong>Veronza</strong><span>SHOES & BAG</span></div></div>
-    <div class="account-mini"><span>حساب المالك</span><b>●</b></div>
+<div class="dashboard-shell">
+
+  <div class="welcome-card">
+    <div>
+      <small>نظام إدارة المخزون والمبيعات</small>
+      <h3>Veronza</h3>
+      <small>SHOES &amp; BAG</small>
+    </div>
+    <div class="brandmark">V</div>
   </div>
 
-  <div class="quick-actions-mobile">
-    <button onclick="showView('sales')"><span>🛍</span><b>بيع جديد</b><small>عملية بيع سريعة</small></button>
-    <button onclick="showView('products')"><span>＋</span><b>إضافة منتج</b><small>إلى المخزون</small></button>
-    <button onclick="showView('orders')"><span>📦</span><b>أضف طلب</b><small>طلب وتوصيل</small></button>
-    <button onclick="startScan()"><span>⌁</span><b>مسح باركود</b><small>بالكاميرا</small></button>
+  <div class="action-grid">
+    <button class="action-card" onclick="showView('products')"><span class="aicon">＋</span><b>إضافة منتج</b><small>إلى المخزون</small></button>
+    <button class="action-card" onclick="showView('sales')"><span class="aicon">🛍️</span><b>بيع جديد</b><small>عملية بيع سريعة</small></button>
+    <button class="action-card" onclick="startScan()"><span class="aicon">⌁</span><b>مسح باركود</b><small>بالكاميرا</small></button>
+    <button class="action-card" onclick="showView('orders')"><span class="aicon">📦</span><b>أضف طلب</b><small>طلب وتوصيل</small></button>
   </div>
 
   <div class="follow-card" onclick="showView('orders')">
-    <div><span class="follow-icon">✓</span><div><b>طلبات تحتاج متابعتك</b><small>راجع الطلبات والتوصيل وحالات التسليم</small></div></div><strong>›</strong>
+    <div><b>طلبات تحتاج متابعتك</b><small style="display:block;opacity:.8;margin-top:4px">راجع الطلبات والتوصيل وحالات التسليم</small></div>
+    <div class="check">✓</div>
   </div>
 
-  <div class="dashboard-title-row"><div><small>ملخص المنظومة</small><h2>لوحة التحكم</h2></div><button onclick="showView('reports')">التقارير ›</button></div>
-
-  <div class="stat-grid-modern">
-    <div class="stat-modern inventory"><span class="stat-icon">📦</span><small>المخزون المتوفر</small><b id="statProducts">0</b><em>منتج</em></div>
-    <div class="stat-modern low"><span class="stat-icon">⚠</span><small>مخزون منخفض</small><b id="statLow">0</b><em>يحتاج متابعة</em></div>
-    <div class="stat-modern sales"><span class="stat-icon">💰</span><small>مبيعات اليوم</small><b id="statSales">0</b><em>د.ل</em></div>
-    <div class="stat-modern stockvalue"><span class="stat-icon">◇</span><small>قيمة المخزون</small><b id="statStock">0</b><em>د.ل</em></div>
+  <div class="dashboard-title-row">
+    <div><span class="eyebrow">ملخص المنظومة</span><h2>لوحة التحكم</h2></div>
+    <button onclick="showView('reports')">التقارير ‹</button>
   </div>
 
-  <div class="status-grid-modern">
-    <button onclick="showView('orders')"><span>🚚</span><b>قيد التوصيل</b><strong id="deliveryStat">0</strong></button>
-    <button onclick="showView('returns')"><span>↩</span><b>المرتجعات</b><strong id="returnStat">0</strong></button>
-    <button onclick="showView('customers')"><span>👥</span><b>العملاء</b><strong id="customerStat">0</strong></button>
-    <button onclick="showView('suppliers')"><span>🏷</span><b>الموردون</b><strong id="supplierStat">0</strong></button>
+  <div class="stat-grid">
+    <div class="stat money"><div class="icon">▣</div><small>إجمالي المبيعات</small><b id="statSales">0</b><em>د.ل</em></div>
+    <div class="stat"><div class="icon">📦</div><small>المخزون المتوفر</small><b id="statStock">0</b><em>قطعة</em></div>
+    <div class="stat good"><div class="icon">▦</div><small>عدد المنتجات</small><b id="statProducts">0</b><em>صنف</em></div>
+    <div class="stat warn"><div class="icon">⚠</div><small>مخزون منخفض</small><b id="statLow">0</b><em>يحتاج متابعة</em></div>
   </div>
 
-  <div class="monthly-card-modern"><div class="monthly-head"><div><small>الأداء المالي</small><h3>مبيعات هذا الشهر</h3></div><span>↗</span></div><div id="monthSales" class="monthly-value">0 د.ل</div><div id="monthTrend" class="monthly-sub">هذا الشهر</div><div class="fake-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-
-  <div style="display:none"><span id="lowCount">0</span></div><div class="section-head-modern"><h3>⚠️ المخزون المنخفض</h3><button onclick="showView('products')">عرض الكل</button></div>
-  <div id="lowList" class="low-products-modern"><div class="empty">لا توجد أصناف منخفضة.</div></div>
-
-  <div class="section-head-modern"><h3>أحدث العمليات</h3><button onclick="showView('sales')">عرض الكل</button></div>
-  <div class="recent-modern"><div class="tablewrap"><table class="recent-table"><thead><tr><th>التاريخ</th><th>النوع</th><th>المنتج</th><th>القيمة</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty-small">لا توجد عمليات</td></tr></tbody></table></div></div>
-
-  <div class="bottom-actions-modern">
-    <button class="dark-action" onclick="showView('products')"><span>＋</span><b>إضافة منتج جديد</b><small>تسجيل منتج في المخزون</small></button>
-    <button class="light-action" onclick="showView('orders')"><span>📦</span><b>إدارة الطلبات</b><small>متابعة الطلب والتوصيل</small></button>
+  <div class="status-grid">
+    <button class="status-card" onclick="showView('orders')"><span class="si">🛒</span><small>طلبات اليوم</small><b id="dashTodayOrders">0</b></button>
+    <button class="status-card" onclick="showView('orders')"><span class="si">🚚</span><small>قيد التوصيل</small><b id="dashDelivery">0</b></button>
+    <button class="status-card" onclick="showView('returns')"><span class="si">↩</span><small>المرتجعات</small><b id="dashReturns">0</b></button>
+    <button class="status-card" onclick="showView('customers')"><span class="si">👥</span><small>العملاء</small><b id="dashCustomers">0</b></button>
   </div>
+
+  <div class="section-card">
+    <div class="section-head"><h3>أحدث المنتجات</h3><button onclick="showView('products')">عرض الكل</button></div>
+    <div class="product-strip">
+      <div class="product-mini"><div class="photo">👟</div><b>منتج جديد</b><small><span class="stock-dot"></span> متوفر</small></div>
+      <div class="product-mini"><div class="photo">👜</div><b>شنطة</b><small><span class="stock-dot"></span> متوفر</small></div>
+      <div class="product-mini"><div class="photo">👞</div><b>حذاء</b><small><span class="stock-dot mid"></span> كمية محدودة</small></div>
+      <div class="product-mini"><div class="photo">🛍️</div><b>إكسسوار</b><small><span class="stock-dot low"></span> مخزون منخفض</small></div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head"><h3>أحدث الطلبات</h3><button onclick="showView('orders')">عرض الكل</button></div>
+    <div class="order-row"><div class="order-icon">📦</div><div><b>آخر طلب</b><small>طلب بيع وتوصيل</small></div><span class="pill">جاري التوصيل</span><b>›</b></div>
+    <div class="order-row"><div class="order-icon">🛒</div><div><b>عملية بيع</b><small>تم تسجيلها في النظام</small></div><span class="pill pending">قيد المتابعة</span><b>›</b></div>
+  </div>
+
+  <div class="quick-bottom">
+    <button class="primary" onclick="showView('products')">＋ إضافة منتج جديد<br><small>تسجيل منتج في المخزون</small></button>
+    <button class="gold" onclick="showView('sales')">🛒 إجراء عملية بيع<br><small>بيع سريع وسهل</small></button>
+  </div>
+
+</div>
 </section>
+
 
 <section id="products" class="view">
  <h2>المخزون والباركود</h2>
@@ -255,6 +449,16 @@ main{max-width:760px!important;margin:auto!important;padding:14px 14px 34px!impo
 <section id="reports" class="view"><h2>التقارير</h2><div class="cards"><div class="card"><span>إجمالي المبيعات</span><b id="repSales">0</b></div><div class="card"><span>إجمالي الربح</span><b id="repProfit">0</b></div><div class="card"><span>عدد القطع المباعة</span><b id="repQty">0</b></div></div><div class="panel"><h3>مبيعات حسب المنتج</h3><div id="reportList"></div></div></section>
 <div style="display:none"><span id="repSales">0</span><span id="repProfit">0</span><span id="repQty">0</span></div>
 <div class="footer">Veronza — Shoes & Bag<br>كل خطوة نحو نجاح أكبر</div>
+
+
+<nav class="vp-bottom-nav" aria-label="التنقل السريع">
+  <button data-v="dashboard" class="active" onclick="showView('dashboard')"><span>⌂</span>الرئيسية</button>
+  <button data-v="products" onclick="showView('products')"><span>▣</span>المخزون</button>
+  <button class="vp-scan" onclick="startScan()"><span>⌁</span>مسح</button>
+  <button data-v="orders" onclick="showView('orders')"><span>📦</span>الطلبات</button>
+  <button data-v="reports" onclick="showView('reports')"><span>▥</span>التقارير</button>
+</nav>
+
 </main>
 
 <script src="app.js"></script>
