@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Veronza | Shoes & Bag</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#171513">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Veronza">
+
 <style>
 :root{
  --ink:#171513;--ink2:#24201c;--cream:#f5f0e8;--card:#fffdf9;
@@ -210,6 +217,10 @@ function closeScanner(){if(scanFrame)cancelAnimationFrame(scanFrame);scanFrame=n
 function startScan(){openScanner('saleBarcode')}
 function startReturnScan(){openScanner('rBarcode')}
 function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.products))throw Error('ملف غير صالح');for(const p of d.products){let row={barcode:String(p.barcode||Date.now()),name:String(p.name||'منتج'),model:p.model||null,size:p.size||null,color:p.color||null,buy:Number(p.buy)||0,sell:Number(p.sell)||0,qty:Number(p.qty)||0,min:Number(p.min)||2};let {error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'});if(error)throw error}toast('تم استيراد المنتجات');await loadAll()}catch(e){toast('فشل الاستيراد: '+(e.message||'ملف غير صالح'))}finally{event.target.value=''}};r.readAsText(f)}
-boot();</script>
+boot();
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
 </body>
 </html>
