@@ -102,6 +102,45 @@ html,body{width:100%;min-width:0;overflow-x:hidden}
   .topbar,.nav,main{max-width:1180px}
 }
 </style>
+
+<style id="veronza-dashboard-match-final">
+*{box-sizing:border-box}
+html{width:100%;min-width:100%;margin:0;padding:0}
+body{width:100%;min-width:100%;margin:0;padding:0;overflow-x:hidden;direction:rtl}
+.top{width:100%!important;max-width:none!important;margin:0!important}
+.topbar{width:100%!important;max-width:1180px;margin:0 auto!important;box-sizing:border-box}
+.nav{width:100%!important;max-width:1180px;margin:14px auto 0!important;box-sizing:border-box}
+main{width:100%!important;max-width:1180px!important;margin:0 auto!important;padding:18px!important}
+#dashboard.view.active{width:100%!important;max-width:none!important}
+.hero{width:100%!important;min-height:245px;display:flex;flex-direction:row;align-items:stretch;overflow:hidden}
+.heroText{flex:1 1 52%;display:flex;flex-direction:column;justify-content:center;padding:28px!important;z-index:2}
+.heroArt{flex:1 1 48%;width:auto!important;min-width:0;min-height:245px;margin:0!important;background-position:center;background-size:cover;background-repeat:no-repeat}
+.cards{width:100%!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{min-width:0;border-radius:22px;padding:20px}
+.dashboard-extra{width:100%!important;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.dashbox{min-width:0}
+@media(max-width:760px){
+ .top{padding:18px 12px 14px!important}
+ .topbar{max-width:none!important}
+ .nav{max-width:none!important;margin-top:12px!important}
+ main{max-width:none!important;padding:12px!important}
+ .hero{min-height:245px!important;border-radius:25px!important}
+ .heroText{padding:20px!important;flex:1 1 54%}
+ .heroText h2{font-size:36px!important;margin:5px 0!important}
+ .heroText p{font-size:17px!important}
+ .heroArt{min-height:245px!important;flex:1 1 46%;opacity:1!important}
+ .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .card{padding:16px!important;border-radius:20px!important}
+ .card b{font-size:30px!important}
+ .dashboard-extra{grid-template-columns:1fr!important;gap:12px!important}
+}
+@media(max-width:430px){
+ .hero{min-height:205px!important}
+ .heroText{padding:16px!important;flex-basis:55%}
+ .heroText h2{font-size:32px!important}
+ .heroArt{min-height:205px!important;flex-basis:45%}
+}
+</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>أدخل بيانات Supabase العامة فقط. لا تستخدم Secret أو service_role.</p><input id="cfgUrl" placeholder="Supabase Project URL"><input id="cfgKey" placeholder="Publishable / anon key"><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">حفظ والاتصال</button><div class="hint">تُحفظ على جهازك فقط داخل المتصفح.</div></div></div>
