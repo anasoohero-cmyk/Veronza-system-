@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<style id="veronza-launch-bg">
-html,body{background:#f6f1e8!important;}
-</style>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Veronza | Shoes & Bag</title>
@@ -81,7 +78,7 @@ th{color:#756c63;background:#f6f0e7}th,td{padding:12px;border-bottom:1px solid #
 <style>
 #setup,#login{position:fixed;inset:0;background:rgba(10,9,8,.88);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}.modal{width:min(520px,100%);background:#fffdf9;border-radius:26px;padding:24px;box-shadow:0 25px 70px rgba(0,0,0,.35);direction:rtl}.modal input{width:100%;margin:8px 0;padding:14px;border:1px solid #e3d7c5;border-radius:14px;font-size:15px}.modal .hint{font-size:12px;color:#81796f;line-height:1.7}.top .user{cursor:pointer}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#171513;color:#fff;padding:12px 18px;border-radius:14px;z-index:1000}.sortbtn{background:none;border:0;cursor:pointer;font-weight:700}.filters{display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:10px}.status{padding:5px 10px;border-radius:999px;background:#eee4d4;display:inline-block;font-size:12px}.danger{background:#f4dfdb!important;color:#8b2d25!important}@media(max-width:650px){.filters{grid-template-columns:1fr}.modal{padding:20px}}
 select{border:1px solid var(--line);background:#fffdf9;padding:12px;border-radius:14px;color:var(--ink)}\n</style><link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f6f1e8">
+<meta name="theme-color" content="#111111">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Veronza">
@@ -430,11 +427,6 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 }
 @keyframes vzSpin{to{transform:rotate(360deg)}}
 #vzPullIndicator.vz-refresh .vz-ring{animation:vzSpin .75s linear infinite}
-</style>
-<style id="veronza-fast-open">
-html,body{background:#f6f1e8!important;color:#171717;}
-body{opacity:1!important;}
-#veronzaUpdateNotice{z-index:99999;}
 </style>
 </head>
 <body>
@@ -829,17 +821,9 @@ function vzGo(id){
     if(updating) window.location.reload();
   });
 
-  // Let the dashboard paint first; update checking runs in the background.
-  function scheduleVeronzaUpdateCheck(){
-    const run=function(){checkVeronzaUpdate();};
-    if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:1800});
-    else setTimeout(run,900);
-  }
-  scheduleVeronzaUpdateCheck();
+  checkVeronzaUpdate();
   document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible'){
-      setTimeout(function(){checkVeronzaUpdate();},500);
-    }
+    if(document.visibilityState==='visible')checkVeronzaUpdate();
   });
 })();
 </script>

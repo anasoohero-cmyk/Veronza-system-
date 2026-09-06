@@ -80,9 +80,9 @@ function renderAll(){
  renderCustomers();renderOrders();renderReturns();
  $('supplierRows').innerHTML=suppliers.map(s=>`<tr><td>${s.name}</td><td>${s.phone||'-'}</td></tr>`).join('')||`<tr><td colspan="2" class="empty">لا يوجد موردون</td></tr>`;
  let repSales=sales.reduce((s,x)=>s+(+x.total||0),0),repProfit=sales.reduce((s,x)=>s+(+x.profit||0),0),repQty=sales.reduce((s,x)=>s+(+x.qty||0),0);
- $('repSales').textContent=money(repSales);$('repProfit').textContent=money(repProfit);$('repQty').textContent=repQty;
+ if($('repSales'))$('repSales').textContent=money(repSales);if($('repProfit'))$('repProfit').textContent=money(repProfit);if($('repQty'))$('repQty').textContent=repQty;
  let rs={};sales.forEach(s=>rs[s.product]=(rs[s.product]||0)+(+s.total||0));
- $('reportList').innerHTML=Object.entries(rs).map(([n,v])=>`<p><b>${n}</b> — ${money(v)}</p>`).join('')||'لا توجد بيانات';
+ if($('reportList'))$('reportList').innerHTML=Object.entries(rs).map(([n,v])=>`<p><b>${n}</b> — ${money(v)}</p>`).join('')||'لا توجد بيانات';
  let now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);
  let monthTotal=sales.filter(x=>new Date(x.created_at)>=monthStart).reduce((a,x)=>a+(+x.total||0),0);
  if($('monthSales'))$('monthSales').textContent=money(monthTotal);
