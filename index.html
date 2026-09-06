@@ -745,42 +745,82 @@ function vzGo(id){
 <script id="veronza-launch-update">
 (function(){
   let updating=false;
-  function showUpdateNotice(){
+  const APPLIED_KEY='veronza_applied_sw_version';
+
+  function showUpdateNotice(version){
     if(document.getElementById('veronzaUpdateNotice'))return;
     const box=document.createElement('div');
     box.id='veronzaUpdateNotice';
     box.innerHTML='<div class="vz-update-card"><div class="vz-update-title">تحديث جديد جاهز ✨</div><div class="vz-update-msg">تم العثور على نسخة جديدة من منظومة Veronza. حدّث الآن ثم ابدأ العمل.</div><button id="vzApplyUpdate">تحديث الآن</button></div>';
     document.body.appendChild(box);
-    document.getElementById('vzApplyUpdate').onclick=function(){
+
+    const btn=document.getElementById('vzApplyUpdate');
+    if(btn) btn.onclick=function(){
       const reg=window.__veronzaUpdateReg;
-      if(reg&&reg.waiting){
+      const worker=reg&&reg.waiting;
+      if(worker){
         updating=true;
-        reg.waiting.postMessage({type:'SKIP_WAITING'});
+        if(version)localStorage.setItem(APPLIED_KEY,version);
+        box.remove();
+        worker.postMessage({type:'SKIP_WAITING'});
       }else{
-        window.location.reload();
+        box.remove();
+        checkVeronzaUpdate();
       }
     };
   }
+
+  function getWaitingVersion(worker){
+    return new Promise(function(resolve){
+      if(!worker){resolve(null);return;}
+      const channel=new MessageChannel();
+      let done=false;
+      const finish=function(v){
+        if(done)return;
+        done=true;
+        clearTimeout(timer);
+        resolve(v||null);
+      };
+      const timer=setTimeout(function(){finish(null);},1200);
+      channel.port1.onmessage=function(e){finish(e.data&&e.data.version);};
+      try{worker.postMessage({type:'GET_VERSION'},[channel.port2]);}
+      catch(e){finish(null);}
+    });
+  }
+
+  async function maybeShowWaiting(reg){
+    if(!reg||!reg.waiting||updating)return;
+    const version=await getWaitingVersion(reg.waiting);
+    const applied=localStorage.getItem(APPLIED_KEY);
+    if(version && applied===version)return;
+    showUpdateNotice(version);
+  }
+
   async function checkVeronzaUpdate(){
     if(updating||!('serviceWorker' in navigator))return;
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?update=12',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
       window.__veronzaUpdateReg=reg;
-      if(reg.waiting)showUpdateNotice();
+      await maybeShowWaiting(reg);
       await reg.update();
-      if(reg.waiting)showUpdateNotice();
+      await maybeShowWaiting(reg);
+
       reg.addEventListener('updatefound',function(){
         const worker=reg.installing;
         if(!worker)return;
-        worker.addEventListener('statechange',function(){
-          if(worker.state==='installed'&&navigator.serviceWorker.controller)showUpdateNotice();
+        worker.addEventListener('statechange',async function(){
+          if(worker.state==='installed'&&navigator.serviceWorker.controller){
+            await maybeShowWaiting(reg);
+          }
         });
       });
     }catch(err){console.warn('Veronza update check:',err);}
   }
+
   navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(updating)window.location.reload();
+    if(updating) window.location.reload();
   });
+
   checkVeronzaUpdate();
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState==='visible')checkVeronzaUpdate();

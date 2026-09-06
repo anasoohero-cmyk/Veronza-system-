@@ -1,4 +1,4 @@
-const CACHE_NAME='veronza-shell-v12';
+const CACHE_NAME='veronza-shell-v14';
 const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
@@ -17,6 +17,10 @@ self.addEventListener('activate',event=>{
 self.addEventListener('message',event=>{
   if(event.data==='SKIP_WAITING'||event.data?.type==='SKIP_WAITING'){
     self.skipWaiting();
+    return;
+  }
+  if(event.data?.type==='GET_VERSION' && event.ports && event.ports[0]){
+    event.ports[0].postMessage({version:CACHE_NAME});
   }
 });
 
