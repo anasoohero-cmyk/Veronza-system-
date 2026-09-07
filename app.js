@@ -115,3 +115,18 @@ boot();
     window.location.reload();
   });
 })();
+
+
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  async function checkVeronzaUpdate(){
+    try{
+      const reg = await navigator.serviceWorker.getRegistration();
+      if(reg && reg.update) await reg.update();
+    }catch(e){ console.warn('Veronza update check:', e); }
+  }
+  window.addEventListener('load', function(){ setTimeout(checkVeronzaUpdate, 300); });
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible') setTimeout(checkVeronzaUpdate, 200);
+  });
+})();
