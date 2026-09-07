@@ -453,8 +453,8 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 </style>
 
 
-</head>
-<body>
+<style id="veronza-startup-splash-style">#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .22s ease,visibility .22s ease}#veronza-startup-splash img{width:min(78vw,360px);height:min(78vw,360px);object-fit:contain;display:block}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style></head>
+<body><div id="veronza-startup-splash" aria-hidden="true"><img src="./veronza-splash.jpg" alt="Veronza"></div>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
 <div id="login"><div class="modal"><h2>تسجيل الدخول إلى Veronza</h2><input id="loginEmail" type="email" placeholder="البريد الإلكتروني"><input id="loginPassword" type="password" placeholder="كلمة المرور"><button class="primary" style="width:100%;margin-top:8px" onclick="login()">دخول</button><button style="width:100%;margin-top:8px" onclick="passkeyLogin()">🔐 دخول سريع بـ Face ID</button><button style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button><div id="loginMsg" class="hint"></div></div></div>
 <header class="top">
@@ -742,7 +742,7 @@ function vzGo(id){
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
-  const BUILD_VERSION='V71';
+  const BUILD_VERSION='V72';
   const PENDING_KEY='veronza_pending_update_version';
   const APPLIED_KEY='veronza_applied_sw_version';
   const COMPLETE_KEY='veronza_update_complete_pending';
@@ -1001,5 +1001,5 @@ function vzGo(id){
   window.addEventListener('pageshow',resumeCheck);
 })();
 </script>
-</body>
+<script>(function(){function hide(){var e=document.getElementById('veronza-startup-splash');if(e){setTimeout(function(){e.classList.add('vz-hide');setTimeout(function(){e.remove()},260)},420)}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hide,{once:true});else hide();})();</script></body>
 </html>
