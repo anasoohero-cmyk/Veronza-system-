@@ -913,10 +913,14 @@ function vzGo(id){
       }
     }
     if(reg&&reg.waiting){
-      showUpdatingStatus();
-      updating=true;
-      try{reg.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){showUpdateError();}
-      return true;
+      // A pending marker alone must never authorize a fresh update.
+      // Re-show the update notice and require an explicit user tap.
+      const waitingVersion=await getWorkerVersion(reg.waiting);
+      if(waitingVersion && waitingVersion===pending){
+        showUpdateNotice(reg,pending);
+        return true;
+      }
+      return false;
     }
     return false;
   }
