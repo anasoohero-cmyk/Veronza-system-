@@ -130,3 +130,20 @@ boot();
     if(document.visibilityState === 'visible') setTimeout(checkVeronzaUpdate, 200);
   });
 })();
+
+
+(function(){
+  const KEY='veronza_update_notice_pending';
+  try{
+    if(sessionStorage.getItem(KEY)==='1'){
+      sessionStorage.removeItem(KEY);
+      setTimeout(function(){
+        if(typeof toast==='function') toast('✅ اكتمل التحديث — Veronza الآن على أحدث نسخة');
+      },900);
+    }
+  }catch(e){}
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    try{sessionStorage.setItem(KEY,'1');}catch(e){}
+  });
+})();
