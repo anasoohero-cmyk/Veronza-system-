@@ -452,6 +452,21 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 }
 </style>
 
+
+<script id="veronza-update-apply-helper">
+function applyVeronzaWaiting(reg){
+  try{
+    if(reg && reg.waiting){
+      const v=reg.waiting.scriptURL||'';
+      localStorage.setItem('veronza_pending_update_version',
+        (v.match(/veronza-shell-v\d+/)||[''])[0] || 'veronza-shell-v40');
+      reg.waiting.postMessage({type:'SKIP_WAITING'});
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+</script>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
@@ -582,7 +597,7 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 </main>
 
 <script src="app.js"></script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.getRegistration("./").catch(()=>{}));}</script>
 
 
 
@@ -716,9 +731,6 @@ function vzGo(id){
   });
 }
 </script>
-
-<div id="vz-update-status">جارِ التحقق من التحديث…</div>
-
 <div id="vzPullIndicator"><div class="vz-ring"></div></div><div id="vzPullText">اسحب للتحديث</div>
 <script id="veronza-safari-refresh-script">
 (function(){
@@ -854,61 +866,111 @@ box.remove();
   }
 
   async function checkVeronzaUpdate(){
-    if(updating||!('serviceWorker' in navigator))return;
-    try{
-      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
-      window.__veronzaUpdateReg=reg;
-      await maybeShowWaiting(reg);
-      await reg.update();
-      await maybeShowWaiting(reg);
+  if(updating||!('serviceWorker' in navigator))return;
+  try{
+    const swUrl='./sw.js?veronza_check='+Date.now();
+    const reg=await navigator.serviceWorker.register(swUrl,{updateViaCache:'none'});
+    window.__veronzaUpdateReg=reg;
 
-      reg.addEventListener('updatefound',function(){
-        const worker=reg.installing;
-        if(!worker)return;
-        worker.addEventListener('statechange',async function(){
-          if(worker.state==='installed'&&navigator.serviceWorker.controller){
-            await maybeShowWaiting(reg);
-          }
-        });
+    try{await fetch(swUrl,{cache:'no-store',credentials:'same-origin'});}catch(e){}
+
+    const inspect=()=>{
+      if(reg.waiting){
+        const script=reg.waiting.scriptURL||'';
+        const match=script.match(/veronza-shell-v\d+/);
+        const version=match?match[0]:'veronza-shell-v40';
+        const applied=localStorage.getItem('veronza_applied_sw_version');
+        if(applied!==version){
+          localStorage.setItem('veronza_pending_update_version',version);
+          reg.waiting.postMessage({type:'SKIP_WAITING'});
+          return true;
+        }
+      }
+      return false;
+    };
+
+    inspect();
+    await reg.update();
+    inspect();
+
+    reg.addEventListener('updatefound',()=>{
+      const worker=reg.installing;
+      if(!worker)return;
+      worker.addEventListener('statechange',()=>{
+        if(worker.state==='installed' && navigator.serviceWorker.controller) inspect();
       });
-    }catch(err){console.warn('Veronza update check:',err);}
-  }
+    });
+  }catch(err){console.warn('Veronza update check:',err);}
+})();
+</script>
 
-  async function finishUpdateWhenReady(){
-    const v=localStorage.getItem('veronza_pending_update_version');
-    if(!v)return false;
-    for(let i=0;i<30;i++){
+<script id="veronza-update-controller">
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange', async function(){
+    if(reloaded) return;
+    const pending=localStorage.getItem('veronza_pending_update_version');
+    if(!pending) return;
+
+    // Wait briefly for the newly activated worker to become queryable.
+    for(let i=0;i<20;i++){
       try{
-        const reg=await navigator.serviceWorker.getRegistration('./');
         const ctl=navigator.serviceWorker.controller;
-        if(reg?.active && ctl){
+        if(ctl){
           const got=await new Promise(resolve=>{
-            let done=false; const ch=new MessageChannel();
-            const t=setTimeout(()=>{if(!done){done=true;resolve('')}},500);
-            ch.port1.onmessage=e=>{if(!done){done=true;clearTimeout(t);resolve(e.data?.version||'')}};
-            try{ctl.postMessage({type:'GET_VERSION'},[ch.port2])}catch(e){clearTimeout(t);resolve('')}
+            let done=false;
+            const ch=new MessageChannel();
+            const timer=setTimeout(()=>{if(!done){done=true;resolve('')}},400);
+            ch.port1.onmessage=e=>{
+              if(!done){
+                done=true; clearTimeout(timer);
+                resolve(e.data?.version||'');
+              }
+            };
+            try{ctl.postMessage({type:'GET_VERSION'},[ch.port2]);}
+            catch(e){clearTimeout(timer);resolve('');}
           });
-          if(got===v){
-            localStorage.setItem(APPLIED_KEY,v);
+          if(got===pending){
+            reloaded=true;
+            localStorage.setItem('veronza_applied_sw_version',pending);
             sessionStorage.setItem('veronza_update_complete_pending','1');
             localStorage.removeItem('veronza_pending_update_version');
-            updating=false;
-            window.location.reload();
-            return true;
+            location.reload();
+            return;
           }
         }
       }catch(e){}
-      await new Promise(r=>setTimeout(r,300));
+      await new Promise(r=>setTimeout(r,250));
     }
-    return false;
-  }
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(updating) finishUpdateWhenReady();
   });
+})();
+</script>
 
-  checkVeronzaUpdate();
-  document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible')checkVeronzaUpdate();
+<script id="veronza-update-on-resume">
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  let lastCheck=0;
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState !== 'visible') return;
+    const now=Date.now();
+    if(now-lastCheck<1500) return;
+    lastCheck=now;
+    setTimeout(function(){
+      try{
+        if(typeof checkVeronzaUpdate==='function') checkVeronzaUpdate();
+      }catch(e){}
+    },200);
+  });
+  window.addEventListener('pageshow', function(){
+    const now=Date.now();
+    if(now-lastCheck<1500) return;
+    lastCheck=now;
+    setTimeout(function(){
+      try{
+        if(typeof checkVeronzaUpdate==='function') checkVeronzaUpdate();
+      }catch(e){}
+    },200);
   });
 })();
 </script>

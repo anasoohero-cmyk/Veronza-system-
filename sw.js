@@ -1,17 +1,17 @@
-const CACHE_NAME='veronza-shell-v36';
+const CACHE_NAME='veronza-shell-v42';
+self.addEventListener('install', event => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    await self.clients.claim();
+  })());
+});
+
 const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
-self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(SHELL)));
-});
 
-self.addEventListener('activate',event=>{
-  event.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
-});
 
 self.addEventListener('message',event=>{
   if(event.data==='SKIP_WAITING'||event.data?.type==='SKIP_WAITING'){
