@@ -1,4 +1,4 @@
-name: Finalize V73
+name: Finalize V74
 
 on:
   push:
@@ -12,27 +12,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply Veronza watermark splash V73
+      - name: Fix Veronza startup screen V74
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V73';", s, count=1)
-          css='''<style id="veronza-startup-splash-style">#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}#veronza-startup-splash img{width:min(52vw,260px);height:auto;object-fit:contain;display:block;opacity:.16}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
-          if 'id="veronza-startup-splash-style"' in s: s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>',css,s,count=1,flags=re.S)
-          s=s.replace('./veronza-watermark.png','./veronza-splash.jpg')
+          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V74';", s, count=1)
+
+          # Make the very first painted page white and preload the exact Veronza logo image.
+          preload='<link rel="preload" as="image" href="./veronza-splash.jpg">'
+          if 'rel="preload" as="image" href="./veronza-splash.jpg"' not in s:
+              s=s.replace('</head>', preload+'</head>', 1)
+
+          splash_css='''<style id="veronza-startup-splash-style">html,body{background:#fff!important;color-scheme:light}#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .18s ease,visibility .18s ease}#veronza-startup-splash img{width:min(52vw,260px);height:auto;object-fit:contain;display:block;opacity:.16}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
+          if 'id="veronza-startup-splash-style"' in s:
+              s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>',splash_css,s,count=1,flags=re.S)
+          else:
+              s=s.replace('</head>',splash_css+'</head>',1)
           p.write_text(s,encoding='utf-8')
+
           sw=Path('sw.js'); x=sw.read_text(encoding='utf-8')
-          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V73';",x,count=1).replace('./veronza-watermark.png','./veronza-splash.jpg')
+          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V74';",x,count=1)
           sw.write_text(x,encoding='utf-8')
           PY
-      - name: Commit V73 watermark splash
+      - name: Commit V74 startup fix
         run: |
           git add index.html sw.js
-          git rm -f --ignore-unmatch veronza-watermark.b64 veronza-watermark.png
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Use Veronza watermark on white startup screen"
+          git commit -m "Fix Veronza startup black screen"
+          git pull --rebase origin main
           git push
