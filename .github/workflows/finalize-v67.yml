@@ -51,4 +51,5 @@ jobs:
           git add index.html veronza-splash.jpg
           git rm -f --ignore-unmatch veronza_splash.b64
           git commit -m "Add Veronza startup splash"
+          git pull --rebase origin main
           git push
