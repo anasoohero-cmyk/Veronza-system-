@@ -1,5 +1,5 @@
-const CACHE_NAME='V70';
-// V70 update detection fix
+const CACHE_NAME='V71';
+// V71 faster update detection
 const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
