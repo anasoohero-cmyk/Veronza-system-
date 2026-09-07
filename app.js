@@ -14,7 +14,15 @@ function stopRealtime(){if(realtimeChannel&&sb){sb.removeChannel(realtimeChannel
 function makeSupabaseClient(c){return window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,experimental:{passkey:true}}})}
 async function registerVeronzaPasskey(){try{if(!sb)throw Error('سجّل الدخول أولاً');if(!window.PublicKeyCredential||!navigator.credentials)throw Error('هذا الجهاز/المتصفح لا يدعم Passkey');let {data,error}=await sb.auth.registerPasskey({friendlyName:'Veronza Face ID'});if(error)throw error;toast('تم تفعيل Face ID لهذا الحساب');return {ok:true,data}}catch(e){console.error(e);toast('تعذر تفعيل Face ID: '+(e.message||'خطأ'));return {ok:false,error:e}}}
 async function passkeyLogin(silent=false){try{if(!window.PublicKeyCredential||!navigator.credentials){if(!silent)$('loginMsg').textContent='هذا الجهاز/المتصفح لا يدعم Passkey';return false}let c=cfg();sb=makeSupabaseClient(c);let {data,error}=await sb.auth.signInWithPasskey();if(error)throw error;if(!data?.session)throw Error('لم يتم إنشاء جلسة الدخول');$('login').style.display='none';startRealtime();await loadAll();toast('تم الدخول بـ Face ID بنجاح');return true}catch(e){console.error(e);if(!silent)$('loginMsg').textContent='تعذر الدخول بـ Face ID: '+(e.message||'حاول مرة أخرى');return false}}
-function ensurePasskeyButton(){
+async function ensurePasskeyButton(){ 
+  try{
+    if(sb?.auth?.passkey?.list){
+      const {data}=await sb.auth.passkey.list();
+      const count=Array.isArray(data?.passkeys)?data.passkeys.length:(Array.isArray(data)?data.length:0);
+      if(count>0) localStorage.setItem('veronza_passkey_registered','1');
+    }
+  }catch(e){ console.debug('Passkey status check skipped',e); }
+
   let c=document.getElementById('vzRegisterPasskeyCard');
   if(c){c.style.display='';}
 }

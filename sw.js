@@ -1,6 +1,10 @@
-const CACHE_NAME='veronza-shell-v42';
+const CACHE_NAME='veronza-shell-v59';
 self.addEventListener('install', event => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil((async()=>{
+    // Keep a new worker waiting until the page records the pending update.
+    // This makes the update -> controllerchange -> internal refresh sequence reliable.
+    await caches.open(CACHE_NAME);
+  })());
 });
 
 self.addEventListener('activate', event => {
