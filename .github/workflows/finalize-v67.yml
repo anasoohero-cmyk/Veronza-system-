@@ -1,4 +1,4 @@
-name: Finalize V72
+name: Finalize V73
 
 on:
   push:
@@ -12,44 +12,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add Veronza splash and finalize V72
+      - name: Apply Veronza watermark splash V73
         run: |
           python - <<'PY'
           from pathlib import Path
           import re, base64
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          s = s.replace("const BUILD_VERSION='V71';", "const BUILD_VERSION='V72';", 1)
-          if 'id="veronza-startup-splash"' not in s:
-              splash = '''<div id="veronza-startup-splash" aria-hidden="true"><img src="./veronza-splash.jpg" alt="Veronza"></div>'''
-              css = '''<style id="veronza-startup-splash-style">#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .22s ease,visibility .22s ease}#veronza-startup-splash img{width:min(78vw,360px);height:min(78vw,360px);object-fit:contain;display:block}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
-              if '</head>' not in s:
-                  raise SystemExit('head marker not found')
-              s = s.replace('</head>', css + '</head>', 1)
-              m = re.search(r'<body[^>]*>', s, re.I)
-              if not m:
-                  raise SystemExit('body marker not found')
-              s = s[:m.end()] + splash + s[m.end():]
-              script = '''<script>(function(){function hide(){var e=document.getElementById('veronza-startup-splash');if(e){setTimeout(function(){e.classList.add('vz-hide');setTimeout(function(){e.remove()},260)},420)}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hide,{once:true});else hide();})();</script>'''
-              if '</body>' not in s:
-                  raise SystemExit('body end marker not found')
-              s = s.replace('</body>', script + '</body>', 1)
+          s = re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V73';", s, count=1)
+          css = '''<style id="veronza-startup-splash-style">#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}#veronza-startup-splash img{width:min(52vw,260px);height:auto;object-fit:contain;display:block;opacity:.16}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
+          if 'id="veronza-startup-splash-style"' in s:
+              s = re.sub(r'<style id="veronza-startup-splash-style">.*?</style>', css, s, count=1, flags=re.S)
+          if 'id="veronza-startup-splash"' in s:
+              s = s.replace('./veronza-splash.jpg', './veronza-watermark.png')
           p.write_text(s, encoding='utf-8')
-          b64 = Path('veronza_splash.b64')
-          if b64.exists():
-              Path('veronza-splash.jpg').write_bytes(base64.b64decode(b64.read_text().strip()))
-              b64.unlink()
+          Path('veronza-watermark.png').write_bytes(base64.b64decode('PASTE_BASE64'))
+          sw = Path('sw.js')
+          x = sw.read_text(encoding='utf-8')
+          x = re.sub(r"const CACHE_NAME='V\d+';", "const CACHE_NAME='V73';", x, count=1)
+          x = x.replace('./veronza-splash.jpg','./veronza-watermark.png')
+          sw.write_text(x, encoding='utf-8')
           PY
-      - name: Commit V72 splash
+      - name: Commit V73 watermark splash
         run: |
-          if git diff --quiet -- index.html veronza-splash.jpg veronza_splash.b64; then
-            echo "V72 already finalized"
+          git rm -f --ignore-unmatch veronza-splash.jpg veronza_splash.b64
+          git add index.html sw.js veronza-watermark.png
+          if git diff --cached --quiet; then
+            echo "V73 already finalized"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html veronza-splash.jpg
-          git rm -f --ignore-unmatch veronza_splash.b64
-          git commit -m "Add Veronza startup splash"
+          git commit -m "Use Veronza watermark on white startup screen"
           git pull --rebase origin main
           git push
