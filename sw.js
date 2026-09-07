@@ -1,4 +1,4 @@
-const CACHE_NAME='veronza-shell-v65';
+const CACHE_NAME='V66';
 const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -14,7 +14,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil((async()=>{
     const keys=await caches.keys();
-    await Promise.all(keys.filter(k=>k.startsWith('veronza-shell-')&&k!==CACHE_NAME).map(k=>caches.delete(k)));
+    await Promise.all(keys.filter(k=>k.startsWith('V')&&k!==CACHE_NAME).map(k=>caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -52,14 +52,18 @@ self.addEventListener('fetch', event=>{
         .catch(()=>caches.match(req).then(r=>r||caches.match('./index.html')))
     );
   } else {
+    // Only cache browser static assets. Do not cache arbitrary same-origin
+    // API/data requests, which can otherwise become stale inside the PWA.
+    const cacheableDestinations=new Set(['style','script','image','font','manifest','worker']);
+    if(!cacheableDestinations.has(req.destination)) return;
     event.respondWith(
-      caches.match(req).then(cached=>cached||fetch(req).then(res=>{
+      fetch(new Request(req,{cache:'no-store'})).then(res=>{
         if(res&&res.ok){
           const copy=res.clone();
           caches.open(CACHE_NAME).then(c=>c.put(req,copy)).catch(()=>{});
         }
         return res;
-      }))
+      }).catch(()=>caches.match(req))
     );
   }
 });

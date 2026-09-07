@@ -567,7 +567,7 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 <section id="returns" class="view"><h2>المرتجعات</h2><div class="panel"><div class="grid"><input id="rBarcode" placeholder="باركود المنتج"><input id="rQty" type="number" value="1" min="1"><input id="rCustomer" placeholder="العميل"><input id="rReason" placeholder="سبب المرتجع"></div><div class="actions"><button class="primary" onclick="addReturn()">تسجيل المرتجع وإرجاع الكمية للمخزون</button><button class="gold" onclick="startReturnScan()">فتح الكاميرا</button></div></div><div class="panel"><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>الباركود</th><th>المنتج</th><th>الكمية</th><th>المبلغ</th><th>السبب</th></tr></thead><tbody id="returnRows"></tbody></table></div></div></section>
 <section id="customers" class="view"><h2>العملاء</h2><div class="panel"><div class="grid"><input id="cName" placeholder="اسم العميل"><input id="cPhone" placeholder="الهاتف"><input id="cAddress" placeholder="العنوان"><input id="cNotes" placeholder="ملاحظات"><button class="primary" onclick="addCustomer()">إضافة عميل</button></div><div class="filters"><input id="customerSearch" placeholder="🔎 بحث باسم أو هاتف" oninput="renderCustomers()"><button onclick="clearCustomerFilter()">مسح الفلاتر</button></div><div class="tablewrap"><table><thead><tr><th><button class="sortbtn" onclick="sortCustomers('name')">الاسم ↕</button></th><th>الهاتف</th><th><button class="sortbtn" onclick="sortCustomers('orders')">عدد الطلبات ↕</button></th><th><button class="sortbtn" onclick="sortCustomers('total_purchases')">إجمالي المشتريات ↕</button></th><th><button class="sortbtn" onclick="sortCustomers('last_purchase_at')">آخر عملية شراء ↕</button></th></tr></thead><tbody id="customerRows"></tbody></table></div></div></section>
 <section id="suppliers" class="view"><h2>الموردون</h2><div class="panel"><div class="grid"><input id="sName" placeholder="اسم المورد"><input id="sPhone" placeholder="الهاتف"><button class="primary" onclick="addSupplier()">إضافة مورد</button></div><div class="tablewrap"><table><thead><tr><th>المورد</th><th>الهاتف</th></tr></thead><tbody id="supplierRows"></tbody></table></div></div></section>
-<section id="reports" class="view"><h2>التقارير</h2><div class="cards"><div class="card"><span>إجمالي المبيعات</span><b id="repSales">0</b></div><div class="card"><span>إجمالي الربح</span><b id="repProfit">0</b></div><div class="card"><span>عدد القطع المباعة</span><b id="repQty">0</b></div></div><div class="panel"><h3>مبيعات حسب المنتج</h3><div id="reportList"></div></div></section>
+<section id="reports" class="view"><h2>التقارير</h2><div class="panel"><div class="filters"><label>الفترة <select id="reportPeriod" onchange="renderReports()"><option value="all">كل المبيعات</option><option value="today">اليوم</option><option value="7d">آخر 7 أيام</option><option value="month">هذا الشهر</option></select></label><span id="reportPeriodLabel">كل المبيعات</span></div></div><div class="cards"><div class="card"><span>إجمالي المبيعات</span><b id="repSales">0</b></div><div class="card"><span>إجمالي الربح</span><b id="repProfit">0</b></div><div class="card"><span>عدد القطع المباعة</span><b id="repQty">0</b></div><div class="card"><span>متوسط العملية</span><b id="repAvg">0</b></div><div class="card"><span>قيمة المخزون بالشراء</span><b id="repStockCost">0</b></div><div class="card"><span>قيمة المخزون بسعر البيع</span><b id="repStockPotential">0</b></div></div><div class="panel"><h3>أفضل المنتجات حسب المبيعات</h3><div id="reportList"></div></div></section>
 <div style="display:none"></div>
 <div class="footer">Veronza — Shoes & Bag<br>كل خطوة نحو نجاح أكبر</div>
 
@@ -583,7 +583,7 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 </main>
 
 <script src="app.js"></script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>null /* SW registration lookup removed; use the single managed registration */.catch(()=>{}));}</script>
+<!-- Service Worker registration is managed by the unified update controller below. -->
 
 
 
@@ -736,38 +736,48 @@ function vzGo(id){
 #vzUpdateComplete h2{margin:0 0 10px;font-size:24px;font-weight:900;color:#111}
 #vzUpdateComplete p{margin:0 0 22px;font-size:15px;line-height:1.8;color:#666}
 #vzUpdateContinue{width:100%;border:0;border-radius:14px;padding:14px 18px;background:#111;color:#fff;font-size:16px;font-weight:800;cursor:pointer}
-</style>
+.report-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.08)}.report-item:last-child{border-bottom:0}.report-item span{display:flex;flex-direction:column;gap:4px}.report-item small{opacity:.65}.report-item strong{white-space:nowrap}.filters label{display:flex;align-items:center;gap:8px;font-weight:700}.filters select{padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff}</style>
 
 <script id="veronza-unified-update">
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
-  const BUILD_VERSION='veronza-shell-v65';
+  const BUILD_VERSION='V66';
   const PENDING_KEY='veronza_pending_update_version';
   const APPLIED_KEY='veronza_applied_sw_version';
   const COMPLETE_KEY='veronza_update_complete_pending';
+  const UPDATE_POLL_MS=10000;
   let updating=false;
   let reloadStarted=false;
   let listenersReady=false;
+  let progressTimers=[];
+
+  function setPageLocked(locked){
+    document.body.style.overflow=locked?'hidden':'';
+    document.documentElement.style.overflow=locked?'hidden':'';
+  }
+
+  function clearProgressTimers(){
+    progressTimers.forEach(clearTimeout);
+    progressTimers=[];
+  }
 
   function showCompletion(){
-    try{
-      if(sessionStorage.getItem(COMPLETE_KEY)!=='1') return;
-      if(document.getElementById('vzUpdateComplete')) return;
-      const o=document.createElement('div');
-      o.id='vzUpdateComplete';
-      o.innerHTML='<div class="vz-update-card"><div class="vz-complete-logo" aria-label="Veronza">VERONZA</div><div class="vz-update-check">✓</div><h2>تم اكتمال التحديث</h2><p>تم تحديث Veronza بنجاح إلى أحدث نسخة.</p><button id="vzUpdateContinue">مواصلة</button></div>';
-      document.body.appendChild(o);
-      document.body.style.overflow='hidden';
-      document.documentElement.style.overflow='hidden';
-      const btn=document.getElementById('vzUpdateContinue');
-      if(btn) btn.onclick=function(){
-        sessionStorage.removeItem(COMPLETE_KEY);
-        o.remove();
-        document.body.style.overflow='';
-        document.documentElement.style.overflow='';
-      };
-    }catch(e){console.warn('Veronza completion:',e);}
+    let complete=null;
+    try{complete=localStorage.getItem(COMPLETE_KEY);}catch(e){}
+    if(complete!=='1') return;
+    if(document.getElementById('vzUpdateComplete')) return;
+    const o=document.createElement('div');
+    o.id='vzUpdateComplete';
+    o.innerHTML='<div class="vz-update-card"><div class="vz-complete-logo" aria-label="Veronza">VERONZA</div><div class="vz-update-check">✓</div><h2>تم اكتمال التحديث</h2><p>تم تحديث Veronza بنجاح إلى أحدث نسخة.</p><button id="vzUpdateContinue">مواصلة</button></div>';
+    document.body.appendChild(o);
+    setPageLocked(true);
+    const btn=document.getElementById('vzUpdateContinue');
+    if(btn) btn.onclick=function(){
+      try{localStorage.removeItem(COMPLETE_KEY);}catch(e){}
+      o.remove();
+      setPageLocked(false);
+    };
   }
 
   function getWorkerVersion(worker){
@@ -776,39 +786,47 @@ function vzGo(id){
       const ch=new MessageChannel();
       let done=false;
       const finish=function(v){if(done)return;done=true;clearTimeout(timer);resolve(v||null);};
-      const timer=setTimeout(function(){finish(null);},3000);
+      const timer=setTimeout(function(){finish(null);},4000);
       ch.port1.onmessage=function(e){finish(e.data&&e.data.version);};
       try{worker.postMessage({type:'GET_VERSION'},[ch.port2]);}catch(e){finish(null);}
     });
-  }
-
-  function showUpdatingStatus(){
-    try{
-      let o=document.getElementById('vzUpdateProgress');
-      if(!o){
-        o=document.createElement('div');
-        o.id='vzUpdateProgress';
-        o.setAttribute('role','status');
-        o.innerHTML='<div id="vzUpdateTitle">جارِ تحديث Veronza…</div><div style="height:8px;background:#eee;border-radius:99px;overflow:hidden;margin:12px 0 8px"><div id="vzUpdateBar" style="height:100%;width:8%;background:#111;border-radius:99px;transition:width .35s ease"></div></div><div id="vzUpdatePercent" style="font-weight:800;text-align:center">8%</div>';
-        o.style.cssText='position:fixed;inset:0;z-index:2147483646;width:100%;height:100%;box-sizing:border-box;background:rgba(8,8,8,.82);display:flex;align-items:center;justify-content:center;padding:22px;direction:rtl;text-align:center;touch-action:none;overscroll-behavior:none;pointer-events:auto'; o.firstElementChild?.removeAttribute('style');
-        document.body.appendChild(o);
-      }
-      setUpdateProgress(12);
-      setTimeout(()=>setUpdateProgress(28),120);
-      setTimeout(()=>setUpdateProgress(45),320);
-      setTimeout(()=>setUpdateProgress(65),650);
-      setTimeout(()=>setUpdateProgress(82),1000);
-      setTimeout(()=>setUpdateProgress(92),1400);
-    }catch(e){}
   }
 
   function setUpdateProgress(percent){
     try{
       const bar=document.getElementById('vzUpdateBar');
       const label=document.getElementById('vzUpdatePercent');
-      if(bar) bar.style.width=Math.max(0,Math.min(100,percent))+'%';
-      if(label) label.textContent=Math.max(0,Math.min(100,percent))+'%';
+      percent=Math.max(0,Math.min(100,percent));
+      if(bar) bar.style.width=percent+'%';
+      if(label) label.textContent=percent+'%';
     }catch(e){}
+  }
+
+  function showUpdatingStatus(){
+    clearProgressTimers();
+    let o=document.getElementById('vzUpdateProgress');
+    if(!o){
+      o=document.createElement('div');
+      o.id='vzUpdateProgress';
+      o.setAttribute('role','dialog');
+      o.setAttribute('aria-modal','true');
+      o.innerHTML='<div><div id="vzUpdateTitle">جارِ تحديث Veronza…</div><div style="height:8px;background:#eee;border-radius:99px;overflow:hidden;margin:12px 0 8px"><div id="vzUpdateBar" style="height:100%;width:8%;background:#111;border-radius:99px;transition:width .35s ease"></div></div><div id="vzUpdatePercent" style="font-weight:800;text-align:center">8%</div></div>';
+      o.style.cssText='position:fixed;inset:0;z-index:2147483646;width:100%;height:100%;box-sizing:border-box;background:rgba(8,8,8,.82);display:flex;align-items:center;justify-content:center;padding:22px;direction:rtl;text-align:center;touch-action:none;overscroll-behavior:none;pointer-events:auto';
+      document.body.appendChild(o);
+    }
+    setPageLocked(true);
+    setUpdateProgress(8);
+    [[12,250],[28,550],[45,850],[65,1150],[82,1500],[92,1900]].forEach(function(item){
+      progressTimers.push(setTimeout(function(){setUpdateProgress(item[0]);},item[1]));
+    });
+  }
+
+  function showUpdateError(){
+    const p=document.getElementById('vzUpdateProgress');
+    if(!p) return;
+    const title=document.getElementById('vzUpdateTitle');
+    if(title) title.textContent='تعذر إكمال التحديث — جارِ إعادة المحاولة…';
+    setUpdateProgress(8);
   }
 
   function showUpdateNotice(reg,version){
@@ -817,25 +835,41 @@ function vzGo(id){
     o.id='vzUpdateNotice';
     o.innerHTML='<div class="vz-update-notice-card"><div class="vz-update-notice-logo">VERONZA</div><div class="vz-update-notice-icon">↻</div><h2>يتوفر تحديث جديد</h2><p>تتوفر نسخة جديدة من Veronza لتحسين الأداء وإضافة التحديثات. اضغط «تحديث الآن» لبدء التحديث.</p><button id="vzUpdateNow">تحديث الآن</button></div>';
     document.body.appendChild(o);
-    document.body.style.overflow='hidden';
-    document.documentElement.style.overflow='hidden';
+    setPageLocked(true);
     const btn=document.getElementById('vzUpdateNow');
     if(btn) btn.onclick=async function(){
       if(updating) return;
+      const worker=reg&&reg.waiting;
+      if(!worker) return;
       updating=true;
       btn.disabled=true;
       btn.textContent='جارِ بدء التحديث…';
       try{localStorage.setItem(PENDING_KEY,version);}catch(e){}
       o.remove();
-      document.body.style.overflow='hidden';
-      document.documentElement.style.overflow='hidden';
       showUpdatingStatus();
-      try{reg.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){
+      try{
+        worker.postMessage({type:'SKIP_WAITING'});
+      }catch(e){
         updating=false;
-        const p=document.getElementById('vzUpdateProgress'); if(p)p.remove();
-        document.body.style.overflow=''; document.documentElement.style.overflow='';
+        showUpdateError();
+        retryActivation(reg,version);
       }
     };
+  }
+
+  async function retryActivation(reg,version){
+    if(!reg) return;
+    updating=true;
+    for(let i=0;i<12;i++){
+      try{await reg.update();}catch(e){}
+      const waiting=reg.waiting;
+      if(waiting){
+        try{waiting.postMessage({type:'SKIP_WAITING'});return;}catch(e){}
+      }
+      await new Promise(r=>setTimeout(r,1000));
+    }
+    // Keep the UI locked until a later resume/poll succeeds.
+    showUpdateError();
   }
 
   async function activateWaiting(reg){
@@ -844,8 +878,8 @@ function vzGo(id){
     const version=await getWorkerVersion(worker);
     if(!version) return false;
     const controller=navigator.serviceWorker.controller;
-    const current=await getWorkerVersion(controller);
     if(!controller) return false;
+    const current=await getWorkerVersion(controller);
     if(current && current===version) return false;
     let applied=null;
     try{applied=localStorage.getItem(APPLIED_KEY);}catch(e){}
@@ -858,30 +892,63 @@ function vzGo(id){
     if(!worker) return;
     worker.addEventListener('statechange',async function(){
       if(worker.state==='installed' && reg.waiting===worker){
-        try{window.__veronzaWaitingWorker=worker;}catch(e){}
-        try{await activateWaiting(reg);}catch(e){}
+        try{await activateWaiting(reg);}catch(e){console.warn('Veronza waiting worker:',e);}
       }
     });
   }
 
+  async function recoverPending(reg){
+    let pending=null, complete=null;
+    try{pending=localStorage.getItem(PENDING_KEY);complete=localStorage.getItem(COMPLETE_KEY);}catch(e){}
+    if(complete==='1'){showCompletion();return true;}
+    if(!pending) return false;
+    const controller=navigator.serviceWorker.controller;
+    if(controller){
+      const current=await getWorkerVersion(controller);
+      if(current===pending){
+        try{localStorage.setItem(APPLIED_KEY,pending);localStorage.removeItem(PENDING_KEY);localStorage.setItem(COMPLETE_KEY,'1');}catch(e){}
+        updating=false; reloadStarted=false;
+        showCompletion();
+        return true;
+      }
+    }
+    if(reg&&reg.waiting){
+      showUpdatingStatus();
+      updating=true;
+      try{reg.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){showUpdateError();}
+      return true;
+    }
+    return false;
+  }
+
   async function checkVeronzaUpdate(){
-    if(!('serviceWorker' in navigator) || updating) return;
+    if(!('serviceWorker' in navigator)) return;
+    if(document.visibilityState!=='visible') return;
+    if(document.getElementById('vzUpdateComplete')) return;
     try{
       const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
       window.__veronzaUpdateReg=reg;
-
-      // Install listeners before update() so a fast installation cannot be missed.
       if(!listenersReady){
         listenersReady=true;
         reg.addEventListener('updatefound',function(){watchInstalling(reg,reg.installing);});
         if(reg.installing) watchInstalling(reg,reg.installing);
       }
-
-      await reg.update();
-      if(reg.waiting) await activateWaiting(reg);
+      if(await recoverPending(reg)) return;
+      if(!updating) await reg.update();
+      if(reg.waiting && !updating) await activateWaiting(reg);
+      // BUILD_VERSION is the app release identifier; it must remain V + number only.
+      const controller=navigator.serviceWorker.controller;
+      if(controller){
+        const current=await getWorkerVersion(controller);
+        if(current && current===BUILD_VERSION) window.__veronzaBuildVerified=true;
+      }
     }catch(e){console.warn('Veronza update check:',e);}
   }
   window.checkVeronzaUpdate=checkVeronzaUpdate;
+
+  setInterval(function(){
+    if(document.visibilityState==='visible') checkVeronzaUpdate();
+  },UPDATE_POLL_MS);
 
   navigator.serviceWorker.addEventListener('controllerchange',function(){
     if(reloadStarted) return;
@@ -891,23 +958,24 @@ function vzGo(id){
     reloadStarted=true;
     (async function(){
       const got=await getWorkerVersion(navigator.serviceWorker.controller);
-      if(!got || got!==pending){reloadStarted=false;return;}
+      if(!got || got!==pending){
+        reloadStarted=false;
+        showUpdateError();
+        return;
+      }
+      clearProgressTimers();
       setUpdateProgress(100);
       try{
         localStorage.setItem(APPLIED_KEY,pending);
         localStorage.removeItem(PENDING_KEY);
-        sessionStorage.setItem(COMPLETE_KEY,'1');
+        localStorage.setItem(COMPLETE_KEY,'1');
       }catch(e){}
-      setTimeout(function(){
-        try{const p=document.getElementById('vzUpdateProgress');if(p)p.remove();}catch(e){}
-        location.reload();
-      },450);
+      setTimeout(function(){location.reload();},500);
     })();
   });
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',showCompletion,{once:true});
   else showCompletion();
-
   setTimeout(checkVeronzaUpdate,350);
 })();
 </script>
@@ -916,27 +984,18 @@ function vzGo(id){
 (function(){
   if(!('serviceWorker' in navigator)) return;
   let lastCheck=0;
-  document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState !== 'visible') return;
+  function resumeCheck(){
     const now=Date.now();
     if(now-lastCheck<1500) return;
     lastCheck=now;
     setTimeout(function(){
-      try{
-        if(typeof window.checkVeronzaUpdate==='function') window.checkVeronzaUpdate();
-      }catch(e){}
+      try{if(typeof window.checkVeronzaUpdate==='function') window.checkVeronzaUpdate();}catch(e){}
     },200);
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible') resumeCheck();
   });
-  window.addEventListener('pageshow', function(){
-    const now=Date.now();
-    if(now-lastCheck<1500) return;
-    lastCheck=now;
-    setTimeout(function(){
-      try{
-        if(typeof window.checkVeronzaUpdate==='function') window.checkVeronzaUpdate();
-      }catch(e){}
-    },200);
-  });
+  window.addEventListener('pageshow',resumeCheck);
 })();
 </script>
 </body>
