@@ -1,4 +1,4 @@
-name: Finalize V69
+name: Finalize V70
 
 on:
   push:
@@ -12,18 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set index build version to V69
+      - name: Set index build version and fix update detection
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = "const BUILD_VERSION='V68';"
-          new = "const BUILD_VERSION='V69';"
-          if old in s:
-              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          s = s.replace("const BUILD_VERSION='V69';", "const BUILD_VERSION='V70';", 1)
+          old = """    const controller=navigator.serviceWorker.controller;\n    if(!controller) return false;\n    const current=await getWorkerVersion(controller);\n    if(current && current===version) return false;"""
+          new = """    const controller=navigator.serviceWorker.controller;\n    const current=controller?await getWorkerVersion(controller):null;\n    if(current && current===version) return false;"""
+          if old not in s:
+              raise SystemExit('Expected update-detection block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit V69 index
+      - name: Commit V70 index
         run: |
           if git diff --quiet -- index.html; then
             echo "index.html already finalized"
@@ -32,5 +35,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Finalize V69 build version in index"
+          git commit -m "Finalize V70 update detection fix"
           git push
