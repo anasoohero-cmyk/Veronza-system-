@@ -1,4 +1,4 @@
-const CACHE_NAME='V73';
+const CACHE_NAME='V74';
 // V72 Veronza startup splash
 const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png','./veronza-splash.jpg'];
 
