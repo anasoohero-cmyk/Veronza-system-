@@ -729,7 +729,7 @@ function vzGo(id){
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
-  const BUILD_VERSION='veronza-shell-v59';
+  const BUILD_VERSION='veronza-shell-v61';
   const PENDING_KEY='veronza_pending_update_version';
   const APPLIED_KEY='veronza_applied_sw_version';
   const COMPLETE_KEY='veronza_update_complete_pending';
@@ -809,9 +809,10 @@ function vzGo(id){
 
   function watchInstalling(reg,worker){
     if(!worker) return;
-    worker.addEventListener('statechange',function(){
+    worker.addEventListener('statechange',async function(){
       if(worker.state==='installed' && reg.waiting===worker){
         try{window.__veronzaWaitingWorker=worker;}catch(e){}
+        try{await activateWaiting(reg);}catch(e){}
       }
     });
   }
