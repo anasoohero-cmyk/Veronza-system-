@@ -14,35 +14,28 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply Veronza watermark splash V73
         run: |
+          if [ ! -f veronza-watermark.b64 ]; then exit 0; fi
           python - <<'PY'
           from pathlib import Path
           import re, base64
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          s = re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V73';", s, count=1)
-          css = '''<style id="veronza-startup-splash-style">#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}#veronza-startup-splash img{width:min(52vw,260px);height:auto;object-fit:contain;display:block;opacity:.16}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
-          if 'id="veronza-startup-splash-style"' in s:
-              s = re.sub(r'<style id="veronza-startup-splash-style">.*?</style>', css, s, count=1, flags=re.S)
-          if 'id="veronza-startup-splash"' in s:
-              s = s.replace('./veronza-splash.jpg', './veronza-watermark.png')
-          p.write_text(s, encoding='utf-8')
-          Path('veronza-watermark.png').write_bytes(base64.b64decode('PASTE_BASE64'))
-          sw = Path('sw.js')
-          x = sw.read_text(encoding='utf-8')
-          x = re.sub(r"const CACHE_NAME='V\d+';", "const CACHE_NAME='V73';", x, count=1)
-          x = x.replace('./veronza-splash.jpg','./veronza-watermark.png')
-          sw.write_text(x, encoding='utf-8')
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V73';", s, count=1)
+          css='''<style id="veronza-startup-splash-style">#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}#veronza-startup-splash img{width:min(52vw,260px);height:auto;object-fit:contain;display:block;opacity:.16}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
+          if 'id="veronza-startup-splash-style"' in s: s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>',css,s,count=1,flags=re.S)
+          s=s.replace('./veronza-splash.jpg','./veronza-watermark.png')
+          p.write_text(s,encoding='utf-8')
+          Path('veronza-watermark.png').write_bytes(base64.b64decode(Path('veronza-watermark.b64').read_text().strip()))
+          sw=Path('sw.js'); x=sw.read_text(encoding='utf-8')
+          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V73';",x,count=1).replace('./veronza-splash.jpg','./veronza-watermark.png')
+          sw.write_text(x,encoding='utf-8')
           PY
       - name: Commit V73 watermark splash
         run: |
-          git rm -f --ignore-unmatch veronza-splash.jpg veronza_splash.b64
+          git rm -f --ignore-unmatch veronza-splash.jpg
           git add index.html sw.js veronza-watermark.png
-          if git diff --cached --quiet; then
-            echo "V73 already finalized"
-            exit 0
-          fi
+          git rm -f --ignore-unmatch veronza-watermark.b64
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "Use Veronza watermark on white startup screen"
-          git pull --rebase origin main
           git push
