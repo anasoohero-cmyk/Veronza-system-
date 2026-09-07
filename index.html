@@ -453,19 +453,6 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 </style>
 
 
-<style id="veronza-update-ui-final">
-#vzUpdateReady,#vzUpdateComplete,#vzUpdateProgress{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.58);backdrop-filter:blur(8px);direction:rtl}
-.vz-update-card{width:min(90vw,390px);padding:28px 22px;border-radius:24px;background:#fffdf9;box-shadow:0 20px 70px rgba(0,0,0,.3);text-align:center;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
-.vz-complete-logo{font-weight:900;letter-spacing:.24em;font-size:18px;margin-bottom:14px}
-.vz-update-check{font-size:38px;margin:6px 0}
-.vz-update-card h2{margin:8px 0;font-size:23px}
-.vz-update-card p{margin:8px 0 20px;color:#666}
-.vz-update-card button{border:0;border-radius:14px;padding:13px 24px;font-weight:800;font-size:16px;background:#111;color:#fff;cursor:pointer}
-.vz-progress-title{font-size:18px;font-weight:800;margin:12px 0 18px}
-.vz-progress-track{height:10px;border-radius:99px;background:#e8e3dc;overflow:hidden}
-#vzUpdateProgressBar{height:100%;width:0%;background:#111;border-radius:99px;transition:width .18s ease}
-#vzUpdateProgressPct{margin-top:10px;font-weight:800;font-size:18px}
-</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
@@ -742,7 +729,7 @@ function vzGo(id){
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
-  const BUILD_VERSION='veronza-shell-v62';
+  const BUILD_VERSION='veronza-shell-v61';
   const PENDING_KEY='veronza_pending_update_version';
   const APPLIED_KEY='veronza_applied_sw_version';
   const COMPLETE_KEY='veronza_update_complete_pending';
@@ -757,16 +744,24 @@ function vzGo(id){
       const o=document.createElement('div');
       o.id='vzUpdateComplete';
       o.innerHTML='<div class="vz-update-card"><div class="vz-complete-logo" aria-label="Veronza">VERONZA</div><div class="vz-update-check">✓</div><h2>تم اكتمال التحديث</h2><p>تم تحديث Veronza بنجاح إلى أحدث نسخة.</p><button id="vzUpdateContinue">مواصلة</button></div>';
-      document.body.appendChild(o); document.body.style.overflow='hidden'; document.documentElement.style.overflow='hidden';
+      document.body.appendChild(o);
+      document.body.style.overflow='hidden';
+      document.documentElement.style.overflow='hidden';
       const btn=document.getElementById('vzUpdateContinue');
-      if(btn) btn.onclick=function(){sessionStorage.removeItem(COMPLETE_KEY);o.remove();document.body.style.overflow='';document.documentElement.style.overflow='';};
+      if(btn) btn.onclick=function(){
+        sessionStorage.removeItem(COMPLETE_KEY);
+        o.remove();
+        document.body.style.overflow='';
+        document.documentElement.style.overflow='';
+      };
     }catch(e){console.warn('Veronza completion:',e);}
   }
 
   function getWorkerVersion(worker){
     return new Promise(function(resolve){
       if(!worker){resolve(null);return;}
-      const ch=new MessageChannel(); let done=false;
+      const ch=new MessageChannel();
+      let done=false;
       const finish=function(v){if(done)return;done=true;clearTimeout(timer);resolve(v||null);};
       const timer=setTimeout(function(){finish(null);},3000);
       ch.port1.onmessage=function(e){finish(e.data&&e.data.version);};
@@ -774,45 +769,57 @@ function vzGo(id){
     });
   }
 
-  function showUpdateReady(reg,version){
-    try{
-      if(document.getElementById('vzUpdateReady')) return;
-      const o=document.createElement('div'); o.id='vzUpdateReady';
-      o.innerHTML='<div class="vz-update-card"><div class="vz-complete-logo" aria-label="Veronza">VERONZA</div><div class="vz-update-check">↻</div><h2>تحديث جديد جاهز ✨</h2><p>يوجد تحديث جديد للنظام.</p><button id="vzUpdateNow">تحديث الآن</button></div>';
-      document.body.appendChild(o); document.body.style.overflow='hidden'; document.documentElement.style.overflow='hidden';
-      const btn=document.getElementById('vzUpdateNow');
-      if(btn) btn.onclick=function(){
-        o.remove(); document.body.style.overflow=''; document.documentElement.style.overflow='';
-        activateWaiting(reg,true,version);
-      };
-    }catch(e){console.warn('Veronza update ready:',e);}
-  }
-
   function showUpdatingStatus(){
     try{
-      if(document.getElementById('vzUpdateProgress')) return;
-      const o=document.createElement('div'); o.id='vzUpdateProgress';
-      o.innerHTML='<div class="vz-progress-card"><div class="vz-complete-logo">VERONZA</div><div class="vz-progress-title">جارِ تحديث Veronza…</div><div class="vz-progress-track"><div id="vzUpdateProgressBar"></div></div><div id="vzUpdateProgressPct">0%</div></div>';
-      document.body.appendChild(o); document.body.style.overflow='hidden'; document.documentElement.style.overflow='hidden';
-      let n=0;
-      window.__veronzaProgressTimer=setInterval(function(){
-        n=Math.min(95,n+Math.max(1,Math.round((95-n)/8)));
-        const bar=document.getElementById('vzUpdateProgressBar'), pct=document.getElementById('vzUpdateProgressPct');
-        if(bar) bar.style.width=n+'%'; if(pct) pct.textContent=n+'%';
-      },180);
+      let o=document.getElementById('vzUpdateProgress');
+      if(!o){
+        o=document.createElement('div');
+        o.id='vzUpdateProgress';
+        o.setAttribute('role','status');
+        o.innerHTML='<div id="vzUpdateTitle">جارِ تحديث Veronza…</div><div style="height:8px;background:#eee;border-radius:99px;overflow:hidden;margin:12px 0 8px"><div id="vzUpdateBar" style="height:100%;width:8%;background:#111;border-radius:99px;transition:width .35s ease"></div></div><div id="vzUpdatePercent" style="font-weight:800;text-align:center">8%</div>';
+        o.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483646;width:min(360px,86vw);background:#fff;color:#111;padding:20px;border-radius:20px;font:700 15px -apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;box-shadow:0 18px 60px rgba(0,0,0,.32);direction:rtl;text-align:center';
+        document.body.appendChild(o);
+      }
+      setUpdateProgress(12);
+      setTimeout(()=>setUpdateProgress(28),120);
+      setTimeout(()=>setUpdateProgress(45),320);
+      setTimeout(()=>setUpdateProgress(65),650);
+      setTimeout(()=>setUpdateProgress(82),1000);
+      setTimeout(()=>setUpdateProgress(92),1400);
     }catch(e){}
   }
 
-  async function activateWaiting(reg,fromButton,knownVersion){
+  function setUpdateProgress(percent){
+    try{
+      const bar=document.getElementById('vzUpdateBar');
+      const label=document.getElementById('vzUpdatePercent');
+      if(bar) bar.style.width=Math.max(0,Math.min(100,percent))+'%';
+      if(label) label.textContent=Math.max(0,Math.min(100,percent))+'%';
+    }catch(e){}
+  }
+
+  async function activateWaiting(reg){
     if(!reg||!reg.waiting||updating) return false;
-    const worker=reg.waiting; const version=knownVersion || await getWorkerVersion(worker); if(!version) return false;
-    const controller=navigator.serviceWorker.controller; if(!controller) return false;
-    const current=await getWorkerVersion(controller); if(current && current===version) return false;
-    let applied=null; try{applied=localStorage.getItem(APPLIED_KEY);}catch(e){}
+    const worker=reg.waiting;
+    const version=await getWorkerVersion(worker);
+    if(!version) return false;
+    const controller=navigator.serviceWorker.controller;
+    const current=await getWorkerVersion(controller);
+
+    // First installation: do not activate a waiting worker here.
+    // Only an already-controlled app may apply an update.
+    if(!controller){
+      return false;
+    }
+
+    if(current && current===version) return false;
+    let applied=null;
+    try{applied=localStorage.getItem(APPLIED_KEY);}catch(e){}
     if(applied===version) return false;
-    if(!fromButton){ showUpdateReady(reg,version); return false; }
+
     try{localStorage.setItem(PENDING_KEY,version);}catch(e){}
-    updating=true; showUpdatingStatus();
+    updating=true;
+    showUpdatingStatus();
     try{worker.postMessage({type:'SKIP_WAITING'});}catch(e){updating=false;return false;}
     return true;
   }
@@ -822,7 +829,7 @@ function vzGo(id){
     worker.addEventListener('statechange',async function(){
       if(worker.state==='installed' && reg.waiting===worker){
         try{window.__veronzaWaitingWorker=worker;}catch(e){}
-        try{await activateWaiting(reg,false);}catch(e){}
+        try{await activateWaiting(reg);}catch(e){}
       }
     });
   }
@@ -830,26 +837,47 @@ function vzGo(id){
   async function checkVeronzaUpdate(){
     if(!('serviceWorker' in navigator) || updating) return;
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}); window.__veronzaUpdateReg=reg;
-      if(!listenersReady){listenersReady=true;reg.addEventListener('updatefound',function(){watchInstalling(reg,reg.installing);});if(reg.installing)watchInstalling(reg,reg.installing);}
-      await reg.update(); if(reg.waiting) await activateWaiting(reg,false);
+      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+      window.__veronzaUpdateReg=reg;
+
+      // Install listeners before update() so a fast installation cannot be missed.
+      if(!listenersReady){
+        listenersReady=true;
+        reg.addEventListener('updatefound',function(){watchInstalling(reg,reg.installing);});
+        if(reg.installing) watchInstalling(reg,reg.installing);
+      }
+
+      await reg.update();
+      if(reg.waiting) await activateWaiting(reg);
     }catch(e){console.warn('Veronza update check:',e);}
   }
   window.checkVeronzaUpdate=checkVeronzaUpdate;
 
   navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(reloadStarted) return; let pending=null; try{pending=localStorage.getItem(PENDING_KEY);}catch(e){}
-    if(!pending) return; reloadStarted=true;
+    if(reloadStarted) return;
+    let pending=null;
+    try{pending=localStorage.getItem(PENDING_KEY);}catch(e){}
+    if(!pending) return;
+    reloadStarted=true;
     (async function(){
-      const got=await getWorkerVersion(navigator.serviceWorker.controller); if(!got||got!==pending){reloadStarted=false;return;}
-      try{localStorage.setItem(APPLIED_KEY,pending);localStorage.removeItem(PENDING_KEY);sessionStorage.setItem(COMPLETE_KEY,'1');}catch(e){}
-      const bar=document.getElementById('vzUpdateProgressBar'),pct=document.getElementById('vzUpdateProgressPct');
-      if(window.__veronzaProgressTimer)clearInterval(window.__veronzaProgressTimer); if(bar)bar.style.width='100%'; if(pct)pct.textContent='100%';
-      setTimeout(function(){location.reload();},250);
+      const got=await getWorkerVersion(navigator.serviceWorker.controller);
+      if(!got || got!==pending){reloadStarted=false;return;}
+      setUpdateProgress(100);
+      try{
+        localStorage.setItem(APPLIED_KEY,pending);
+        localStorage.removeItem(PENDING_KEY);
+        sessionStorage.setItem(COMPLETE_KEY,'1');
+      }catch(e){}
+      setTimeout(function(){
+        try{const p=document.getElementById('vzUpdateProgress');if(p)p.remove();}catch(e){}
+        location.reload();
+      },450);
     })();
   });
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',showCompletion,{once:true}); else showCompletion();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',showCompletion,{once:true});
+  else showCompletion();
+
   setTimeout(checkVeronzaUpdate,350);
 })();
 </script>

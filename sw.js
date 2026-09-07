@@ -1,4 +1,4 @@
-const CACHE_NAME='veronza-shell-v62';
+const CACHE_NAME='veronza-shell-v61';
 self.addEventListener('install', event => {
   event.waitUntil((async()=>{
     // Keep a new worker waiting until the page records the pending update.
