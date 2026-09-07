@@ -716,6 +716,19 @@ function vzGo(id){
 </script>
 
 
+<style id="veronza-update-progress-style">
+#vzUpdateProgress{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
+#vzUpdateProgress > div{width:min(360px,86vw);box-sizing:border-box;background:#fff;color:#111;padding:20px;border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.32)}
+</style>
+<style id="veronza-update-notice-style">
+#vzUpdateNotice{position:fixed;inset:0;z-index:2147483647;background:rgba(8,8,8,.82);display:flex;align-items:center;justify-content:center;padding:22px;direction:rtl;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;touch-action:none;overscroll-behavior:none}
+#vzUpdateNotice .vz-update-notice-card{width:min(430px,100%);background:#fffaf0;border-radius:28px;padding:32px 24px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.45);border:1px solid rgba(190,150,70,.45)}
+#vzUpdateNotice .vz-update-notice-logo{font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:700;letter-spacing:3px;margin-bottom:20px}
+#vzUpdateNotice .vz-update-notice-icon{width:68px;height:68px;border-radius:50%;margin:0 auto 18px;background:#111;color:#d7b56d;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900}
+#vzUpdateNotice h2{margin:0 0 10px;font-size:25px;color:#111;font-weight:900}
+#vzUpdateNotice p{margin:0 0 24px;color:#5b5751;font-size:15px;line-height:1.8}
+#vzUpdateNow{width:100%;border:0;border-radius:16px;padding:15px 18px;background:#111;color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+</style>
 <style id="veronza-update-complete-style">
 #vzUpdateComplete{position:fixed;pointer-events:auto;inset:0;z-index:200000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px;direction:rtl;touch-action:none;overscroll-behavior:none;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
 #vzUpdateComplete .vz-update-card{width:min(430px,100%);background:#fff;border-radius:24px;padding:30px 24px;box-shadow:0 24px 70px rgba(0,0,0,.42);text-align:center}
@@ -729,7 +742,7 @@ function vzGo(id){
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
-  const BUILD_VERSION='veronza-shell-v61';
+  const BUILD_VERSION='veronza-shell-v65';
   const PENDING_KEY='veronza_pending_update_version';
   const APPLIED_KEY='veronza_applied_sw_version';
   const COMPLETE_KEY='veronza_update_complete_pending';
@@ -777,7 +790,7 @@ function vzGo(id){
         o.id='vzUpdateProgress';
         o.setAttribute('role','status');
         o.innerHTML='<div id="vzUpdateTitle">جارِ تحديث Veronza…</div><div style="height:8px;background:#eee;border-radius:99px;overflow:hidden;margin:12px 0 8px"><div id="vzUpdateBar" style="height:100%;width:8%;background:#111;border-radius:99px;transition:width .35s ease"></div></div><div id="vzUpdatePercent" style="font-weight:800;text-align:center">8%</div>';
-        o.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483646;width:min(360px,86vw);background:#fff;color:#111;padding:20px;border-radius:20px;font:700 15px -apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;box-shadow:0 18px 60px rgba(0,0,0,.32);direction:rtl;text-align:center';
+        o.style.cssText='position:fixed;inset:0;z-index:2147483646;width:100%;height:100%;box-sizing:border-box;background:rgba(8,8,8,.82);display:flex;align-items:center;justify-content:center;padding:22px;direction:rtl;text-align:center;touch-action:none;overscroll-behavior:none;pointer-events:auto'; o.firstElementChild?.removeAttribute('style');
         document.body.appendChild(o);
       }
       setUpdateProgress(12);
@@ -798,6 +811,33 @@ function vzGo(id){
     }catch(e){}
   }
 
+  function showUpdateNotice(reg,version){
+    if(document.getElementById('vzUpdateNotice') || updating) return;
+    const o=document.createElement('div');
+    o.id='vzUpdateNotice';
+    o.innerHTML='<div class="vz-update-notice-card"><div class="vz-update-notice-logo">VERONZA</div><div class="vz-update-notice-icon">↻</div><h2>يتوفر تحديث جديد</h2><p>تتوفر نسخة جديدة من Veronza لتحسين الأداء وإضافة التحديثات. اضغط «تحديث الآن» لبدء التحديث.</p><button id="vzUpdateNow">تحديث الآن</button></div>';
+    document.body.appendChild(o);
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    const btn=document.getElementById('vzUpdateNow');
+    if(btn) btn.onclick=async function(){
+      if(updating) return;
+      updating=true;
+      btn.disabled=true;
+      btn.textContent='جارِ بدء التحديث…';
+      try{localStorage.setItem(PENDING_KEY,version);}catch(e){}
+      o.remove();
+      document.body.style.overflow='hidden';
+      document.documentElement.style.overflow='hidden';
+      showUpdatingStatus();
+      try{reg.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){
+        updating=false;
+        const p=document.getElementById('vzUpdateProgress'); if(p)p.remove();
+        document.body.style.overflow=''; document.documentElement.style.overflow='';
+      }
+    };
+  }
+
   async function activateWaiting(reg){
     if(!reg||!reg.waiting||updating) return false;
     const worker=reg.waiting;
@@ -805,22 +845,12 @@ function vzGo(id){
     if(!version) return false;
     const controller=navigator.serviceWorker.controller;
     const current=await getWorkerVersion(controller);
-
-    // First installation: do not activate a waiting worker here.
-    // Only an already-controlled app may apply an update.
-    if(!controller){
-      return false;
-    }
-
+    if(!controller) return false;
     if(current && current===version) return false;
     let applied=null;
     try{applied=localStorage.getItem(APPLIED_KEY);}catch(e){}
     if(applied===version) return false;
-
-    try{localStorage.setItem(PENDING_KEY,version);}catch(e){}
-    updating=true;
-    showUpdatingStatus();
-    try{worker.postMessage({type:'SKIP_WAITING'});}catch(e){updating=false;return false;}
+    showUpdateNotice(reg,version);
     return true;
   }
 
