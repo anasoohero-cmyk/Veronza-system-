@@ -1,4 +1,4 @@
-const CACHE_NAME='veronza-shell-v34';
+const CACHE_NAME='veronza-shell-v36';
 const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{

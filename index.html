@@ -437,6 +437,21 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 #vzUpdateComplete p{margin:0 0 24px;color:#555;font-size:16px;line-height:1.7}
 #vzUpdateContinue{width:100%;border:0;border-radius:16px;padding:15px 18px;background:#111;color:#fff;font-size:17px;font-weight:700;cursor:pointer}
 </style>
+
+<style id="veronza-complete-logo-style">
+#vzUpdateComplete .vz-complete-logo{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:30px;
+  font-weight:700;
+  letter-spacing:3px;
+  margin:0 0 14px;
+  text-transform:uppercase;
+}
+#vzUpdateComplete .vz-complete-logo span{
+  display:inline-block;
+}
+</style>
+
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
@@ -769,7 +784,7 @@ function vzGo(id){
       const show=function(){
         if(document.getElementById('vzUpdateComplete'))return;
         const o=document.createElement('div'); o.id='vzUpdateComplete';
-        o.innerHTML='<div class=\"vz-update-card\"><div class=\"vz-update-check\">✓</div><h2>تم اكتمال التحديث</h2><p>تم تحديث Veronza بنجاح إلى أحدث نسخة.</p><button id=\"vzUpdateContinue\">مواصلة</button></div>';
+        o.innerHTML='<div class=\"vz-update-card\"><div class="vz-complete-logo" aria-label="Veronza">VERONZA</div><div class=\"vz-update-check\">✓</div><h2>تم اكتمال التحديث</h2><p>تم تحديث Veronza بنجاح إلى أحدث نسخة.</p><button id=\"vzUpdateContinue\">مواصلة</button></div>';
         document.body.appendChild(o);
         document.body.style.overflow='hidden';
         document.documentElement.style.overflow='hidden';
@@ -804,6 +819,7 @@ function vzGo(id){
       try{ if(version) localStorage.setItem('veronza_pending_update_version', version); }catch(e){}
 box.remove();
         worker.postMessage({type:'SKIP_WAITING'});
+        setTimeout(()=>{if(updating) finishUpdateWhenReady()},700);
       }else{
         box.remove();
         checkVeronzaUpdate();
@@ -858,15 +874,36 @@ box.remove();
     }catch(err){console.warn('Veronza update check:',err);}
   }
 
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(updating){
+  async function finishUpdateWhenReady(){
+    const v=localStorage.getItem('veronza_pending_update_version');
+    if(!v)return false;
+    for(let i=0;i<30;i++){
       try{
-        const v=localStorage.getItem('veronza_pending_update_version');
-        if(v) localStorage.setItem(APPLIED_KEY,v);
+        const reg=await navigator.serviceWorker.getRegistration('./');
+        const ctl=navigator.serviceWorker.controller;
+        if(reg?.active && ctl){
+          const got=await new Promise(resolve=>{
+            let done=false; const ch=new MessageChannel();
+            const t=setTimeout(()=>{if(!done){done=true;resolve('')}},500);
+            ch.port1.onmessage=e=>{if(!done){done=true;clearTimeout(t);resolve(e.data?.version||'')}};
+            try{ctl.postMessage({type:'GET_VERSION'},[ch.port2])}catch(e){clearTimeout(t);resolve('')}
+          });
+          if(got===v){
+            localStorage.setItem(APPLIED_KEY,v);
+            sessionStorage.setItem('veronza_update_complete_pending','1');
+            localStorage.removeItem('veronza_pending_update_version');
+            updating=false;
+            window.location.reload();
+            return true;
+          }
+        }
       }catch(e){}
-      sessionStorage.setItem('veronza_update_complete_pending','1');
-      window.location.reload();
+      await new Promise(r=>setTimeout(r,300));
     }
+    return false;
+  }
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(updating) finishUpdateWhenReady();
   });
 
   checkVeronzaUpdate();
