@@ -428,6 +428,15 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 @keyframes vzSpin{to{transform:rotate(360deg)}}
 #vzPullIndicator.vz-refresh .vz-ring{animation:vzSpin .75s linear infinite}
 </style>
+
+<style id="vz-update-lock-style">
+#vzUpdateComplete{position:fixed;pointer-events:auto;inset:0;z-index:2147483647;background:rgba(8,8,8,.96);display:flex;align-items:center;justify-content:center;padding:24px;direction:rtl}
+#vzUpdateComplete .vz-update-card{width:min(440px,94vw);background:#fffaf0;border-radius:28px;padding:34px 24px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.45);border:1px solid rgba(190,150,70,.45)}
+#vzUpdateComplete .vz-update-check{width:72px;height:72px;border-radius:50%;margin:0 auto 18px;background:#111;color:#d7b56d;font-size:48px;line-height:72px;font-weight:800}
+#vzUpdateComplete h2{margin:0 0 10px;font-size:27px;color:#111}
+#vzUpdateComplete p{margin:0 0 24px;color:#555;font-size:16px;line-height:1.7}
+#vzUpdateContinue{width:100%;border:0;border-radius:16px;padding:15px 18px;background:#111;color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+</style>
 </head>
 <body>
 <div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
@@ -509,17 +518,6 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
     <div class="section-head"><h3>أحدث الطلبات</h3><button onclick="showView('orders')">عرض الكل</button></div>
     <div class="order-row"><div class="order-icon">📦</div><div><b>آخر طلب</b><small>طلب بيع وتوصيل</small></div><span class="pill">جاري التوصيل</span><b>›</b></div>
     <div class="order-row"><div class="order-icon">🛒</div><div><b>عملية بيع</b><small>تم تسجيلها في النظام</small></div><span class="pill pending">قيد المتابعة</span><b>›</b></div>
-  </div>
-
-
-  <div id="vzRegisterPasskeyCard" class="panel" style="margin-top:18px;border:1px solid rgba(184,145,67,.45);background:linear-gradient(135deg,#fffdf8,#f8f1e4);box-shadow:0 10px 28px rgba(60,35,55,.08);">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
-      <div>
-        <div style="font-size:20px;font-weight:800;margin-bottom:5px;">🔐 الدخول السريع بـ Face ID</div>
-        <div style="font-size:14px;color:#766d72;line-height:1.7;">فعّل Face ID مرة واحدة، وبعدها تقدر تدخل لحسابك بسرعة بدون كتابة البريد وكلمة المرور.</div>
-      </div>
-      <button class="primary" type="button" onclick="registerVeronzaPasskey()" style="min-width:210px;">تفعيل الدخول بـ Face ID</button>
-    </div>
   </div>
 
   <div class="quick-bottom">
@@ -746,6 +744,14 @@ function vzGo(id){
 })();
 </script>
 
+<style id="veronza-update-complete-style">
+#vzUpdateComplete{position:fixed;pointer-events:auto;inset:0;z-index:200000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px;direction:rtl;touch-action:none;overscroll-behavior:none;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
+#vzUpdateComplete .vz-update-card{width:min(430px,100%);background:#fff;border-radius:24px;padding:30px 24px;box-shadow:0 24px 70px rgba(0,0,0,.42);text-align:center}
+#vzUpdateComplete .vz-update-check{width:64px;height:64px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#111;color:#fff;font-size:34px;font-weight:800}
+#vzUpdateComplete h2{margin:0 0 10px;font-size:24px;font-weight:900;color:#111}
+#vzUpdateComplete p{margin:0 0 22px;font-size:15px;line-height:1.8;color:#666}
+#vzUpdateContinue{width:100%;border:0;border-radius:14px;padding:14px 18px;background:#111;color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+</style>
 <style id="veronza-update-notice-style">
 #veronzaUpdateNotice{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.48);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top) + 22px) 16px 20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .vz-update-card{width:min(420px,100%);background:#fff;border-radius:22px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);direction:rtl;text-align:right;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
@@ -755,6 +761,30 @@ function vzGo(id){
 </style>
 <script id="veronza-launch-update">
 (function(){
+  // Show a blocking confirmation after a successful service-worker update.
+  // The flag is written before reload and consumed only when the user taps Continue.
+  try{
+    if(sessionStorage.getItem('veronza_update_complete_pending')==='1'){
+      /* Keep veronza_update_complete_pending until Continue is pressed. */
+      const show=function(){
+        if(document.getElementById('vzUpdateComplete'))return;
+        const o=document.createElement('div'); o.id='vzUpdateComplete';
+        o.innerHTML='<div class=\"vz-update-card\"><div class=\"vz-update-check\">✓</div><h2>تم اكتمال التحديث</h2><p>تم تحديث Veronza بنجاح إلى أحدث نسخة.</p><button id=\"vzUpdateContinue\">مواصلة</button></div>';
+        document.body.appendChild(o);
+        document.body.style.overflow='hidden';
+        document.documentElement.style.overflow='hidden';
+        const btn=document.getElementById('vzUpdateContinue');
+        if(btn)btn.onclick=function(){
+          sessionStorage.removeItem('veronza_update_complete_pending');
+          o.remove();
+          document.body.style.overflow='';
+          document.documentElement.style.overflow='';
+        };
+      };
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',show,{once:true}); else show();
+    }
+  }catch(e){console.warn('Veronza update completion notice:',e);}
+
   let updating=false;
   const APPLIED_KEY='veronza_applied_sw_version';
 
@@ -771,8 +801,8 @@ function vzGo(id){
       const worker=reg&&reg.waiting;
       if(worker){
         updating=true;
-        if(version)localStorage.setItem(APPLIED_KEY,version);
-        box.remove();
+      try{ if(version) localStorage.setItem('veronza_pending_update_version', version); }catch(e){}
+box.remove();
         worker.postMessage({type:'SKIP_WAITING'});
       }else{
         box.remove();
@@ -829,7 +859,14 @@ function vzGo(id){
   }
 
   navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(updating) window.location.reload();
+    if(updating){
+      try{
+        const v=localStorage.getItem('veronza_pending_update_version');
+        if(v) localStorage.setItem(APPLIED_KEY,v);
+      }catch(e){}
+      sessionStorage.setItem('veronza_update_complete_pending','1');
+      window.location.reload();
+    }
   });
 
   checkVeronzaUpdate();

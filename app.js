@@ -12,12 +12,14 @@ function scheduleLoadAll(){clearTimeout(loadTimer);loadTimer=setTimeout(()=>load
 function startRealtime(){if(!sb||realtimeChannel)return;realtimeChannel=sb.channel('veronza-live').on('postgres_changes',{event:'*',schema:'public',table:'products'},scheduleLoadAll).on('postgres_changes',{event:'*',schema:'public',table:'sales'},scheduleLoadAll).on('postgres_changes',{event:'*',schema:'public',table:'customers'},scheduleLoadAll).on('postgres_changes',{event:'*',schema:'public',table:'suppliers'},scheduleLoadAll).on('postgres_changes',{event:'*',schema:'public',table:'orders'},scheduleLoadAll).on('postgres_changes',{event:'*',schema:'public',table:'returns'},scheduleLoadAll).subscribe(status=>{if(status==='SUBSCRIBED')toast('تم تفعيل التحديث المباشر');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Realtime status:',status)})}
 function stopRealtime(){if(realtimeChannel&&sb){sb.removeChannel(realtimeChannel)}realtimeChannel=null}
 function makeSupabaseClient(c){return window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,experimental:{passkey:true}}})}
-async function registerVeronzaPasskey(){try{if(!sb)throw Error('سجّل الدخول أولاً');if(!window.PublicKeyCredential||!navigator.credentials)throw Error('هذا الجهاز/المتصفح لا يدعم Passkey');let existing=await sb.auth.passkey.list();if(existing?.data&&existing.data.length){localStorage.setItem('veronza_passkey_registered','1');markPasskeyActive();toast('Face ID مفعّل بالفعل لهذا الحساب');return {ok:true,already:true,data:existing.data}}let {data,error}=await sb.auth.registerPasskey();if(error){if(error.code==='webauthn_credential_exists'){localStorage.setItem('veronza_passkey_registered','1');markPasskeyActive();toast('Face ID مفعّل بالفعل لهذا الحساب');return {ok:true,already:true}}throw error}localStorage.setItem('veronza_passkey_registered','1');markPasskeyActive();toast('تم حفظ Face ID بنجاح');return {ok:true,data}}catch(e){console.error(e);toast('تعذر تفعيل Face ID: '+(e.message||'خطأ'));return {ok:false,error:e}}}
-function markPasskeyActive(){let card=$('vzRegisterPasskeyCard');if(card){card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;"><div><div style="font-size:20px;font-weight:800;margin-bottom:5px;">✅ Face ID مفعّل</div><div style="font-size:14px;color:#766d72;line-height:1.7;">Passkey محفوظ لهذا الحساب. استخدمه من شاشة الدخول.</div></div><button class="primary" type="button" onclick="passkeyLogin(false)" style="min-width:210px;">🔐 دخول سريع بـ Face ID</button></div>';}}
-async function ensurePasskeyButton(){let c=$('vzRegisterPasskeyCard');if(!c)return;c.style.display='block';try{if(sb){let r=await sb.auth.passkey.list();if(r?.data&&r.data.length){localStorage.setItem('veronza_passkey_registered','1');markPasskeyActive();return}}}catch(e){console.warn('Passkey list check failed',e)}if(localStorage.getItem('veronza_passkey_registered')==='1')markPasskeyActive();}
+async function registerVeronzaPasskey(){try{if(!sb)throw Error('سجّل الدخول أولاً');if(!window.PublicKeyCredential||!navigator.credentials)throw Error('هذا الجهاز/المتصفح لا يدعم Passkey');let {data,error}=await sb.auth.registerPasskey({friendlyName:'Veronza Face ID'});if(error)throw error;toast('تم تفعيل Face ID لهذا الحساب');return {ok:true,data}}catch(e){console.error(e);toast('تعذر تفعيل Face ID: '+(e.message||'خطأ'));return {ok:false,error:e}}}
+async function passkeyLogin(silent=false){try{if(!window.PublicKeyCredential||!navigator.credentials){if(!silent)$('loginMsg').textContent='هذا الجهاز/المتصفح لا يدعم Passkey';return false}let c=cfg();sb=makeSupabaseClient(c);let {data,error}=await sb.auth.signInWithPasskey();if(error)throw error;if(!data?.session)throw Error('لم يتم إنشاء جلسة الدخول');$('login').style.display='none';startRealtime();await loadAll();toast('تم الدخول بـ Face ID بنجاح');return true}catch(e){console.error(e);if(!silent)$('loginMsg').textContent='تعذر الدخول بـ Face ID: '+(e.message||'حاول مرة أخرى');return false}}
+function ensurePasskeyButton(){
+  let c=document.getElementById('vzRegisterPasskeyCard');
+  if(c){c.style.display='';}
+}
 async function boot(){let c=cfg();if(!c){$('setup').style.display='flex';return}try{sb=makeSupabaseClient(c);sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){stopRealtime();location.reload()}else if(event==='SIGNED_IN'&&session){$('login').style.display='none';startRealtime();scheduleLoadAll()}});let {data:{session},error:sessionError}=await sb.auth.getSession();if(sessionError)throw sessionError;if(!session){$('login').style.display='flex';return}ensurePasskeyButton();document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showView(b.dataset.v));let u=document.querySelector('.user');u.innerHTML='مرحباً بك <b>'+((session.user.email||'').split('@')[0])+' ⌄</b>';u.onclick=()=>sb.auth.signOut();await loadAll();startRealtime();ensurePasskeyButton()}catch(e){console.error(e);$('setup').style.display='flex';toast('تعذر الاتصال بـ Supabase: '+(e.message||'خطأ غير معروف'))}}
 async function login(){try{let c=cfg();if(!c)throw Error('إعداد Supabase غير موجود');sb=makeSupabaseClient(c);let {error}=await sb.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});$('loginMsg').textContent=error?error.message:'تم الدخول';if(!error)location.reload()}catch(e){$('loginMsg').textContent=e.message||'تعذر تسجيل الدخول'}}
-async function passkeyLogin(silent=false){try{let c=cfg();if(!c)throw Error('إعداد Supabase غير موجود');sb=makeSupabaseClient(c);if(!window.PublicKeyCredential||!navigator.credentials)throw Error('هذا الجهاز/المتصفح لا يدعم Passkey');let {data,error}=await sb.auth.signInWithPasskey();if(error)throw error;if(data?.session||data?.user){$('login').style.display='none';ensurePasskeyButton();startRealtime();await loadAll();toast('تم الدخول بـ Face ID بنجاح');return {ok:true,data}}throw Error('لم يتم العثور على Passkey لهذا الحساب')}catch(e){console.error(e);if(!silent)$('loginMsg').textContent=e.message||'تعذر الدخول بـ Face ID';return {ok:false,error:e}}}
 async function signup(){try{let c=cfg();if(!c)throw Error('إعداد Supabase غير موجود');sb=makeSupabaseClient(c);let {error}=await sb.auth.signUp({email:$('loginEmail').value.trim(),password:$('loginPassword').value});$('loginMsg').textContent=error?error.message:'تم إنشاء الحساب. تحقق من البريد إذا طلب منك ذلك.'}catch(e){$('loginMsg').textContent=e.message||'تعذر إنشاء الحساب'}}
 async function loadAll(){if(!sb||loadingAll)return;loadingAll=true;try{let results=await Promise.allSettled([sb.from('products').select('*').order('created_at',{ascending:false}),sb.from('sales').select('*').order('created_at',{ascending:false}).limit(100),sb.from('customers').select('*').order('created_at',{ascending:false}),sb.from('suppliers').select('*').order('created_at',{ascending:false}),sb.from('orders').select('*').order('created_at',{ascending:false}).limit(100),sb.from('returns').select('*').order('created_at',{ascending:false}).limit(100)]);let names=['المنتجات','المبيعات','العملاء','الموردون','الطلبات','المرتجعات'],sets=[v=>products=v,v=>sales=v,v=>customers=v,v=>suppliers=v,v=>orders=v,v=>returnsRows=v];let errors=[];results.forEach((r,i)=>{if(r.status==='fulfilled'&&!r.value.error){sets[i](r.value.data||[])}else{let err=r.status==='rejected'?r.reason:r.value.error;errors.push(names[i]+': '+(err?.message||'خطأ في القراءة'))}});renderAll();if(errors.length)toast('تعذر تحديث '+errors.join('، '))}catch(e){console.error(e);toast('تعذر تحديث البيانات: '+(e.message||'خطأ غير معروف'))}finally{loadingAll=false}}
 async function addProduct(){let p={barcode:String(Date.now()).slice(-8),name:$('pName').value.trim(),model:$('pModel').value.trim(),size:$('pSize').value.trim(),color:$('pColor').value.trim(),buy:+$('pBuy').value||0,sell:+$('pSell').value||0,qty:+$('pQty').value||0,min:+$('pMin').value||2};if(!p.name)return toast('اكتب اسم المنتج');let {error}=await sb.from('products').insert(p);if(error)return toast(error.message);['pName','pModel','pSize','pColor','pBuy','pSell','pQty'].forEach(id=>$(id).value='');toast('تمت إضافة المنتج — الباركود '+p.barcode);await loadAll()}
@@ -104,46 +106,7 @@ function closeScanner(){if(scanFrame)cancelAnimationFrame(scanFrame);scanFrame=n
 function startScan(){openScanner('saleBarcode')}
 function startReturnScan(){openScanner('rBarcode')}
 function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.products))throw Error('ملف غير صالح');for(const p of d.products){let row={barcode:String(p.barcode||Date.now()),name:String(p.name||'منتج'),model:p.model||null,size:p.size||null,color:p.color||null,buy:Number(p.buy)||0,sell:Number(p.sell)||0,qty:Number(p.qty)||0,min:Number(p.min)||2};let {error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'});if(error)throw error}toast('تم استيراد المنتجات');await loadAll()}catch(e){toast('فشل الاستيراد: '+(e.message||'ملف غير صالح'))}finally{event.target.value=''}};r.readAsText(f)}
+
+// Veronza auto-update + locked completion notice
+
 boot();
-
-(function(){
-  if(!('serviceWorker' in navigator)) return;
-  let reloaded=false;
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(reloaded)return;
-    reloaded=true;
-    window.location.reload();
-  });
-})();
-
-
-(function(){
-  if(!('serviceWorker' in navigator)) return;
-  async function checkVeronzaUpdate(){
-    try{
-      const reg = await navigator.serviceWorker.getRegistration();
-      if(reg && reg.update) await reg.update();
-    }catch(e){ console.warn('Veronza update check:', e); }
-  }
-  window.addEventListener('load', function(){ setTimeout(checkVeronzaUpdate, 300); });
-  document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState === 'visible') setTimeout(checkVeronzaUpdate, 200);
-  });
-})();
-
-
-(function(){
-  const KEY='veronza_update_notice_pending';
-  try{
-    if(sessionStorage.getItem(KEY)==='1'){
-      sessionStorage.removeItem(KEY);
-      setTimeout(function(){
-        if(typeof toast==='function') toast('✅ اكتمل التحديث — Veronza الآن على أحدث نسخة');
-      },900);
-    }
-  }catch(e){}
-  if(!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    try{sessionStorage.setItem(KEY,'1');}catch(e){}
-  });
-})();
