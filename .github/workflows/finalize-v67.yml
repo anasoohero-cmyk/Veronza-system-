@@ -1,4 +1,4 @@
-name: Finalize V74
+name: Finalize V75
 
 on:
   push:
@@ -12,36 +12,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix Veronza startup screen V74
+      - name: Remove Veronza startup splash and finalize V75
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V74';", s, count=1)
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V75';", s, count=1)
 
-          # Make the very first painted page white and preload the exact Veronza logo image.
-          preload='<link rel="preload" as="image" href="./veronza-splash.jpg">'
-          if 'rel="preload" as="image" href="./veronza-splash.jpg"' not in s:
-              s=s.replace('</head>', preload+'</head>', 1)
-
-          splash_css='''<style id="veronza-startup-splash-style">html,body{background:#fff!important;color-scheme:light}#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .18s ease,visibility .18s ease}#veronza-startup-splash img{width:min(52vw,260px);height:auto;object-fit:contain;display:block;opacity:.16}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
-          if 'id="veronza-startup-splash-style"' in s:
-              s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>',splash_css,s,count=1,flags=re.S)
-          else:
-              s=s.replace('</head>',splash_css+'</head>',1)
+          # Remove the in-page splash completely. Veronza should start directly on its normal white UI.
+          s=re.sub(r'<link rel="preload" as="image" href="\./veronza-splash\.jpg">\s*', '', s, count=1)
+          s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>\s*', '', s, count=1, flags=re.S)
+          s=re.sub(r'<div id="veronza-startup-splash"[^>]*>.*?</div>\s*', '', s, count=1, flags=re.S)
+          s=re.sub(r'<script>\(function\(\)\{function hide\(\).*?</script>\s*', '', s, count=1, flags=re.S)
           p.write_text(s,encoding='utf-8')
 
-          sw=Path('sw.js'); x=sw.read_text(encoding='utf-8')
-          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V74';",x,count=1)
+          sw=Path('sw.js')
+          x=sw.read_text(encoding='utf-8')
+          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V75';",x,count=1)
+          x=x.replace("'./veronza-splash.jpg',", "")
           sw.write_text(x,encoding='utf-8')
           PY
-      - name: Commit V74 startup fix
+      - name: Commit V75 no splash
         run: |
           git add index.html sw.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Fix Veronza startup black screen"
+          git commit -m "Remove Veronza startup black-screen splash"
           git pull --rebase origin main
           git push
