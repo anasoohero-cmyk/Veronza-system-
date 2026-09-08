@@ -1,6 +1,5 @@
 const CACHE_NAME='V88';
 // V77 real update progress
-// import repair release trigger
 const SHELL=['./','./index.html','./app.js','./sw.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
