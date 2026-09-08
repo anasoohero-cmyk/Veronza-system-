@@ -1,0 +1,38 @@
+name: Repair barcode pagination
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair barcode pagination
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app.js')
+          s=p.read_text(encoding='utf-8')
+          old="sb.from('products').select('barcode').range(from,from+pageSize-1)"
+          new="sb.from('products').select('barcode').order('id',{ascending:false}).range(from,from+pageSize-1)"
+          if old not in s:
+              raise SystemExit('barcode pagination marker not found')
+          if s.count(old) != 1:
+              raise SystemExit('barcode pagination marker is not unique')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit repair and remove temporary workflow
+        run: |
+          rm -f .github/workflows/repair-barcode-pagination.yml
+          git add app.js .github/workflows/repair-barcode-pagination.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fix barcode pagination ordering"
+          git pull --rebase origin main
+          git push
