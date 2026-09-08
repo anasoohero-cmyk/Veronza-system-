@@ -41,6 +41,45 @@ function renderReturns(){let a=[...returnsRows].sort((x,y)=>new Date(y.created_a
 function clearCustomerFilters(){if($('customerSearch'))$('customerSearch').value='';customerSort={key:null,dir:1};renderCustomers()}
 function renderReports(){let range=$('reportRange')?.value||'all',now=new Date(),a=sales.filter(s=>{let d=new Date(s.created_at);if(range==='today')return d.toDateString()===now.toDateString();if(range==='7')return d<=now&&(now-d)<=7*86400000;if(range==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();return true});let total=a.reduce((x,s)=>x+Number(s.total||0),0),profit=a.reduce((x,s)=>x+Number(s.profit||0),0),qty=a.reduce((x,s)=>x+Number(s.qty||0),0);$('rTotal').textContent=money(total);$('rProfit').textContent=money(profit);$('rQty').textContent=qty.toLocaleString('ar-LY');$('rAvg').textContent=money(a.length?total/a.length:0);$('rInventoryCost').textContent=money(products.reduce((x,p)=>x+Number(p.buy||0)*Number(p.qty||0),0));$('rPotential').textContent=money(products.reduce((x,p)=>x+Number(p.sell||0)*Number(p.qty||0),0));let top={};a.forEach(s=>{let k=s.product||s.barcode||'غير معروف';top[k]=(top[k]||0)+Number(s.qty||0)});let rows=Object.entries(top).sort((x,y)=>y[1]-x[1]).slice(0,20);$('reportRows').innerHTML=rows.length?rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join(''):`<tr><td colspan="2" class="empty">لا توجد مبيعات</td></tr>`}
 function renderAll(){renderProducts();renderOrders();renderReturns();renderCustomers();renderReports();let low=products.filter(p=>Number(p.qty||0)<=Number(p.min||0));$('lowStock').innerHTML=low.length?low.map(p=>`<div class="low-item"><b>${p.name}</b><span>${p.qty} متبقي</span></div>`).join(''):'<div class="empty">لا توجد تنبيهات</div>';let totalSales=sales.reduce((a,s)=>a+Number(s.total||0),0);$('dashSales').textContent=money(totalSales);$('dashProducts').textContent=products.length.toLocaleString('ar-LY');$('dashOrders').textContent=orders.length.toLocaleString('ar-LY');$('dashProfit').textContent=money(sales.reduce((a,s)=>a+Number(s.profit||0),0))}
+async function importData(event){
+  const file=event.target.files?.[0];
+  if(!file)return;
+  const clean=row=>{const o={};Object.keys(row||{}).forEach(k=>{if(!['id','user_id','created_at','updated_at','order_no'].includes(k))o[k]=row[k]});return o};
+  const fingerprint=row=>JSON.stringify(clean(row));
+  try{
+    const data=JSON.parse(await file.text());
+    const tables=[['products',data.products,products,true],['customers',data.customers,customers,false],['suppliers',data.suppliers,suppliers,false],['orders',data.orders,orders,false],['sales',data.sales,sales,false],['returns',data.returns,returnsRows,false]];
+    if(!tables.some(x=>Array.isArray(x[1])))throw Error('ملف النسخة الاحتياطية غير صالح');
+    if(!sb)throw Error('سجّل الدخول أولاً');
+    let added=0,updated=0;
+    for(const [table,rows,current,isProducts] of tables){
+      if(!Array.isArray(rows)||!rows.length)continue;
+      if(isProducts){
+        for(const original of rows){
+          const row=clean(original);
+          row.barcode=String(row.barcode||'').trim();
+          if(!row.barcode)continue;
+          const {data:up,error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'}).select('id').maybeSingle();
+          if(error)throw Error('المنتجات: '+error.message);
+          if(up)updated++;
+        }
+      }else{
+        const seen=new Set((current||[]).map(fingerprint));
+        for(const original of rows){
+          const row=clean(original);
+          const fp=fingerprint(row);
+          if(seen.has(fp))continue;
+          const {error}=await sb.from(table).insert(row);
+          if(error)throw Error(table+': '+error.message);
+          seen.add(fp);added++;
+        }
+      }
+    }
+    await loadAll();
+    toast('تم استيراد النسخة الاحتياطية بنجاح — أضيف '+added+' وتحدث '+updated);
+  }catch(e){console.error(e);toast('فشل الاستيراد: '+(e.message||'ملف غير صالح'))}
+  finally{event.target.value=''}
+}
 function exportData(){let blob=new Blob([JSON.stringify({products,sales,customers,suppliers,orders,returns:returnsRows},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='veronza-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 window.addEventListener('beforeunload',()=>stopRealtime());
 boot();
