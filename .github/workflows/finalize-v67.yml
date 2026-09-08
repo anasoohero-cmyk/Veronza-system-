@@ -60,6 +60,21 @@ jobs:
               s=s[:body.start()]+'<body'+attrs+' style="background:#fff!important">'+s[body.end():]
           index.write_text(s,encoding='utf-8')
 
+          # Repair the missing full-data import handler once, without touching an existing implementation.
+          app=Path('app.js')
+          a=app.read_text(encoding='utf-8')
+          if 'async function importData(event)' not in a:
+              marker="\nwindow.addEventListener('beforeunload',()=>stopRealtime());"
+              if marker not in a:
+                  raise SystemExit('importData insertion marker not found')
+              new=r'''\nasync function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);let names=['products','sales','customers','suppliers','orders','returns'];if(!names.some(t=>Array.isArray(d[t])))throw Error('ملف غير صالح');let clean=row=>{let x={};Object.entries(row||{}).forEach(([k,v])=>{if(!['id','user_id','created_at','updated_at'].includes(k))x[k]=v});return x};let fp=row=>JSON.stringify(Object.keys(clean(row)).sort().map(k=>[k,clean(row)[k]]));
+          if(Array.isArray(d.products)){for(const p of d.products){let row=clean(p);let barcode=String(row.barcode||'').trim();if(!barcode)barcode=await generateSequentialBarcode();row.barcode=barcode;let {error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'});if(error)throw error}}
+          let existing={sales,customers,suppliers,orders,returns:returnsRows};for(const name of ['customers','suppliers','orders','sales','returns']){let rows=Array.isArray(d[name])?d[name]:[];if(!rows.length)continue;let seen=new Set((existing[name]||[]).map(fp));for(const raw of rows){let row=clean(raw);if(name==='orders')delete row.order_no;let key=fp(row);if(seen.has(key))continue;let {error}=await sb.from(name).insert(row);if(error)throw error;seen.add(key)}}
+          await loadAll();toast('تم استيراد البيانات بنجاح');}catch(e){console.error(e);toast('فشل الاستيراد: '+(e.message||'ملف غير صالح'))}finally{event.target.value=''}};r.readAsText(f)}
+'''
+              a=a.replace(marker,new+marker,1)
+              app.write_text(a,encoding='utf-8')
+
           sw=Path('sw.js')
           x=sw.read_text(encoding='utf-8')
           x,n=re.subn(r"const CACHE_NAME='V\d+';",f"const CACHE_NAME='{version}';",x,count=1)
@@ -70,7 +85,7 @@ jobs:
           PY
       - name: Commit release version
         run: |
-          git add index.html sw.js
+          git add index.html app.js sw.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Release Veronza ${{ github.sha }}"
