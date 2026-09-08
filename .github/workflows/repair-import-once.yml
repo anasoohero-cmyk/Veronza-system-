@@ -30,5 +30,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Fix Veronza backup import"
-          git pull --rebase origin main
-          git push
+          for i in $(seq 1 12); do
+            git pull --rebase origin main || true
+            if git push; then exit 0; fi
+            sleep 2
+          done
+          exit 1
