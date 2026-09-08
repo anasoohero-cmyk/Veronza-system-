@@ -1,6 +1,6 @@
-const CACHE_NAME='V75';
-// V72 Veronza startup splash
-const SHELL=['./','./index.html','./app.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png','./veronza-splash.jpg'];
+const CACHE_NAME='V76';
+// V76 update detection test
+const SHELL=['./','./index.html','./app.js','./sw.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL.map(url=>new Request(url,{cache:'reload'})))));
@@ -21,7 +21,7 @@ self.addEventListener('fetch',event=>{
   const url=new URL(req.url);
   if(url.origin!==location.origin) return;
   const isNavigation=req.mode==='navigate';
-  const isCore=['/','/index.html','/app.js','/sw.js','/manifest.webmanifest','/apple-touch-icon.png','/icon-192.png','/icon-512.png','/veronza-splash.jpg'].includes(url.pathname);
+  const isCore=['/','/index.html','/app.js','/sw.js','/manifest.webmanifest','/apple-touch-icon.png','/icon-192.png','/icon-512.png'].includes(url.pathname);
   if(isNavigation||isCore){
     event.respondWith(fetch(new Request(req,{cache:'no-store'})).then(response=>{
       if(response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(c=>c.put(req,copy));}
