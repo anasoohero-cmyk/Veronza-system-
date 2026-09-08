@@ -57,7 +57,6 @@ function getOrderDisplayList(){
     return Number(a.id||0)-Number(b.id||0);
   });
 }
-function nextOrderDisplayNo(){return getOrderDisplayList().length+1}
 async function addOrder(){
   if(orderBusy)return;
   let customer=$('oCustomer').value.trim(),phone=$('oPhone').value.trim(),address=$('oAddress').value.trim(),total=+$('oTotal').value||0;
@@ -67,77 +66,29 @@ async function addOrder(){
   let btn=document.querySelector('button[onclick="addOrder()"]');
   if(btn)btn.disabled=true;
   try{
-    // The database may contain old/non-sequential order_no values or a trigger may rewrite them.
-    // We therefore use the record count for the new display sequence and render a clean sequence below.
-    let nextNo=nextOrderDisplayNo();
-    $('oNo').value=String(nextNo);
-    let row={order_no:String(nextNo),customer,phone,address,total,status:$('oStatus').value||'جديد',delivery_status:$('oDelivery').value||'قيد التجهيز',notes:$('oNotes').value.trim()};
-    let {error}=await sb.from('orders').insert(row);
+    // The database owns order numbering atomically. Do not calculate or send a display number from the client.
+    let row={customer,phone,address,total,status:$('oStatus').value||'جديد',delivery_status:$('oDelivery').value||'قيد التجهيز',notes:$('oNotes').value.trim()};
+    let {data,error}=await sb.from('orders').insert(row).select('order_no').single();
     if(error)throw error;
+    let createdOrderNo=String(data?.order_no||'').trim();
+    if(!createdOrderNo)throw Error('تم إنشاء الطلب لكن تعذر قراءة رقم الطلب');
     ['oNo','oCustomer','oPhone','oAddress','oTotal','oNotes'].forEach(id=>$(id).value='');
     $('oStatus').value='جديد';$('oDelivery').value='قيد التجهيز';
-    toast('تمت إضافة الطلب رقم '+nextNo);
+    toast('تمت إضافة الطلب رقم '+createdOrderNo);
     await loadAll();
   }catch(e){toast(e.message||'تعذر إضافة الطلب')}
   finally{orderBusy=false;if(btn)btn.disabled=false}
 }
-async function updateOrder(id,field,value){let patch={};patch[field]=value;let {error}=await sb.from('orders').update(patch).eq('id',id);if(error)toast(error.message);else await loadAll()}
-async function deleteOrder(id){if(!confirm('حذف الطلب؟'))return;let {error}=await sb.from('orders').delete().eq('id',id);if(error)toast(error.message);else await loadAll()}
+async function updateOrder(id,field,value){let patch={};patch[field]=value;let {error}=await sb.from('orders').update(patch).eq('id',id);if(error)toast(error.message);else{toast('تم تحديث الطلب');await loadAll()}}
+async function deleteOrder(id){if(!confirm('حذف الطلب؟'))return;let {error}=await sb.from('orders').delete().eq('id',id);if(error)toast(error.message);else{toast('تم حذف الطلب');await loadAll()}}
 async function addReturn(){let bc=$('rBarcode').value.trim(),q=+$('rQty').value||1;if(!bc)return toast('أدخل أو امسح الباركود');if(q<=0)return toast('الكمية غير صحيحة');let {data,error}=await sb.rpc('record_return',{p_barcode:bc,p_qty:q,p_customer:$('rCustomer').value.trim()||null,p_reason:$('rReason').value.trim()||null});if(error)return toast(error.message);['rBarcode','rCustomer','rReason'].forEach(id=>$(id).value='');$('rQty').value=1;toast('تم تسجيل المرتجع وإرجاع الكمية');await loadAll()}
-function renderOrders(){
-  let q=($('orderSearch')?.value||'').toLowerCase();
-  let a=getOrderDisplayList();
-  a=a.filter(o=>Object.values(o).join(' ').toLowerCase().includes(q));
-  $('orderRows').innerHTML=a.length?a.map((o,i)=>{
-    const displayNo=getOrderDisplayList().findIndex(x=>String(x.id)===String(o.id))+1;
-    return `<tr><td><b>${displayNo}</b></td><td>${o.customer||'-'}</td><td>${o.phone||'-'}</td><td>${money(o.total)}</td><td><select onchange="updateOrder(${o.id},'status',this.value)"><option ${o.status==='جديد'?'selected':''}>جديد</option><option ${o.status==='قيد المعالجة'?'selected':''}>قيد المعالجة</option><option ${o.status==='مكتمل'?'selected':''}>مكتمل</option><option ${o.status==='ملغي'?'selected':''}>ملغي</option></select></td><td><select onchange="updateOrder(${o.id},'delivery_status',this.value)"><option ${o.delivery_status==='قيد التجهيز'?'selected':''}>قيد التجهيز</option><option ${o.delivery_status==='خرج للتوصيل'?'selected':''}>خرج للتوصيل</option><option ${o.delivery_status==='تم التسليم'?'selected':''}>تم التسليم</option><option ${o.delivery_status==='تعذر التسليم'?'selected':''}>تعذر التسليم</option></select></td><td>${new Date(o.created_at).toLocaleString('ar-LY')}</td><td><button class="danger" onclick="deleteOrder(${o.id})">حذف</button></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">لا توجد طلبات</td></tr>`
-}
-function renderReturns(){$('returnRows').innerHTML=returnsRows.length?returnsRows.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString('ar-LY')}</td><td>${r.barcode}</td><td>${r.product||''}</td><td>${r.qty}</td><td>${money(r.amount)}</td><td>${r.reason||'-'}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">لا توجد مرتجعات</td></tr>`}
-function renderCustomers(){let q=($('customerSearch')?.value||'').toLowerCase();let a=customers.filter(c=>(c.name+' '+(c.phone||'')).toLowerCase().includes(q));if(customerSort.key)a.sort((x,y)=>{let a=x[customerSort.key]??'',b=y[customerSort.key]??'';if(customerSort.key==='last_purchase_at'){a=a?new Date(a).getTime():0;b=b?new Date(b).getTime():0}return a>b?customerSort.dir:a<b?-customerSort.dir:0});$('customerRows').innerHTML=a.length?a.map(c=>`<tr><td><b>${c.name}</b></td><td>${c.phone||'-'}</td><td>${c.orders||0}</td><td>${money(c.total_purchases)}</td><td>${c.last_purchase_at?new Date(c.last_purchase_at).toLocaleDateString('ar-LY'):'-'}</td></tr>`).join(''):`<tr><td colspan="5" class="empty">لا يوجد عملاء</td></tr>`}
-function sortCustomers(k){if(customerSort.key===k)customerSort.dir*=-1;else{customerSort.key=k;customerSort.dir=1}renderCustomers()}function clearCustomerFilter(){$('customerSearch').value='';customerSort={key:null,dir:1};renderCustomers()}
-function getReportPeriod(){return $('reportPeriod')?.value||'all'}
-function reportStartDate(period){let now=new Date();if(period==='today')return new Date(now.getFullYear(),now.getMonth(),now.getDate());if(period==='7d'){let d=new Date(now);d.setDate(d.getDate()-6);d.setHours(0,0,0,0);return d}if(period==='month')return new Date(now.getFullYear(),now.getMonth(),1);return null}
-function renderReports(){
- let period=getReportPeriod(),start=reportStartDate(period),filtered=start?sales.filter(x=>new Date(x.created_at)>=start):sales.slice();
- let repSales=filtered.reduce((s,x)=>s+(+x.total||0),0),repProfit=filtered.reduce((s,x)=>s+(+x.profit||0),0),repQty=filtered.reduce((s,x)=>s+(+x.qty||0),0);
- let avg=filtered.length?repSales/filtered.length:0;
- let stockCost=products.reduce((s,p)=>s+(+p.buy||0)*(+p.qty||0),0),stockPotential=products.reduce((s,p)=>s+(+p.sell||0)*(+p.qty||0),0);
- $('repSales').textContent=money(repSales);$('repProfit').textContent=money(repProfit);$('repQty').textContent=repQty;
- if($('repAvg'))$('repAvg').textContent=money(avg);if($('repStockCost'))$('repStockCost').textContent=money(stockCost);if($('repStockPotential'))$('repStockPotential').textContent=money(stockPotential);
- let rs={};filtered.forEach(s=>{let key=s.product||'غير محدد';let row=rs[key]||{sales:0,qty:0,profit:0};row.sales+=(+s.total||0);row.qty+=(+s.qty||0);row.profit+=(+s.profit||0);rs[key]=row});
- let ranking=Object.entries(rs).sort((a,b)=>b[1].sales-a[1].sales);
- if($('reportList'))$('reportList').innerHTML=ranking.length?ranking.slice(0,20).map(([n,v],i)=>`<div class="report-item"><span><b>#${i+1} ${n}</b><small>${v.qty} قطعة • ربح ${money(v.profit)}</small></span><strong>${money(v.sales)}</strong></div>`).join(''):'لا توجد بيانات';
- if($('reportPeriodLabel'))$('reportPeriodLabel').textContent=period==='today'?'اليوم':period==='7d'?'آخر 7 أيام':period==='month'?'هذا الشهر':'كل المبيعات';
-}
-function renderAll(){
- let today=new Date(),todays=sales.filter(s=>new Date(s.created_at).toDateString()===today.toDateString());
- $('statProducts').textContent=products.length;
- $('statStock').textContent=money(products.reduce((s,p)=>s+(+p.buy||0)*(+p.qty||0),0));
- $('statSales').textContent=money(todays.reduce((s,x)=>s+(+x.total||0),0));
- let lows=products.filter(p=>p.qty<=p.min);
- $('statLow').textContent=lows.length;
- if($('lowList'))$('lowList').innerHTML=lows.length?lows.map(p=>`<div class="badge low">${p.name} — المتبقي ${p.qty}</div>`).join(' '):'لا توجد أصناف منخفضة.';
- if($('lowCount'))$('lowCount').textContent=lows.length;
- renderProducts();
- $('salesRows').innerHTML=sales.slice(0,30).map(s=>`<tr><td>${new Date(s.created_at).toLocaleString('ar-LY')}</td><td>${s.product}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.customer||'-'}</td></tr>`).join('')||`<tr><td colspan="5" class="empty">لا توجد مبيعات</td></tr>`;
- renderCustomers();renderOrders();renderReturns();
- $('supplierRows').innerHTML=suppliers.map(s=>`<tr><td>${s.name}</td><td>${s.phone||'-'}</td></tr>`).join('')||`<tr><td colspan="2" class="empty">لا يوجد موردون</td></tr>`;
- renderReports();
- let now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);
- let monthTotal=sales.filter(x=>new Date(x.created_at)>=monthStart).reduce((a,x)=>a+(+x.total||0),0);
- if($('monthSales'))$('monthSales').textContent=money(monthTotal);
- if($('monthTrend'))$('monthTrend').textContent='مبيعات هذا الشهر';
- let recent=sales.slice(0,5);
- if($('recentRows'))$('recentRows').innerHTML=recent.length?recent.map(x=>`<tr><td>${new Date(x.created_at).toLocaleDateString('ar-LY')}</td><td><span class="status">بيع</span></td><td>${x.product||'-'}</td><td>${money(x.total)}</td></tr>`).join(''):`<tr><td colspan="4" class="empty-small">لا توجد عمليات</td></tr>`;
-}
-function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({products,sales,customers,suppliers,orders,returns:returnsRows},null,2)],{type:'application/json'}));a.download='veronza-data.json';a.click()}
-let activeStream=null,scanVideo=null,scanFrame=null;
-async function openScanner(targetId){if(!navigator.mediaDevices?.getUserMedia)return toast('الكاميرا غير متاحة في هذا المتصفح');if(!('BarcodeDetector' in window))return toast('الآيفون لا يدعم قارئ الباركود المدمج هنا. اكتب الباركود يدويًا أو استخدم جهاز قارئ.');try{let d=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','itf']});activeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});scanVideo=document.createElement('video');scanVideo.autoplay=true;scanVideo.playsInline=true;scanVideo.muted=true;Object.assign(scanVideo.style,{position:'fixed',inset:'8%',width:'84%',height:'58%',objectFit:'cover',zIndex:1001,background:'#000',borderRadius:'20px'});document.body.appendChild(scanVideo);let close=document.createElement('button');close.textContent='إغلاق';Object.assign(close.style,{position:'fixed',top:'10%',right:'10%',zIndex:1002,padding:'12px 18px',borderRadius:'14px',border:'0',background:'#fff'});close.onclick=closeScanner;document.body.appendChild(close);scanVideo.srcObject=activeStream;await scanVideo.play();let loop=async()=>{if(!scanVideo)return;try{let codes=await d.detect(scanVideo);if(codes[0]?.rawValue){$(targetId).value=codes[0].rawValue;toast('تم التقاط الباركود');closeScanner();return}}catch(e){}scanFrame=requestAnimationFrame(loop)};loop()}catch(e){closeScanner();toast('تعذر تشغيل الكاميرا. اسمح بالوصول للكاميرا')}}
-function closeScanner(){if(scanFrame)cancelAnimationFrame(scanFrame);scanFrame=null;if(activeStream){activeStream.getTracks().forEach(t=>t.stop());activeStream=null}if(scanVideo){scanVideo.remove();scanVideo=null}document.querySelectorAll('body>button').forEach(b=>{if(b.textContent==='إغلاق')b.remove()})}
-function startScan(){openScanner('saleBarcode')}
-function startReturnScan(){openScanner('rBarcode')}
-async function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.products))throw Error('ملف غير صالح');for(const p of d.products){let barcode=String(p.barcode||'').trim();if(!barcode)barcode=await generateSequentialBarcode();let row={barcode,name:String(p.name||'منتج'),model:p.model||null,size:p.size||null,color:p.color||null,buy:Number(p.buy)||0,sell:Number(p.sell)||0,qty:Number(p.qty)||0,min:Number(p.min)||2};let {error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'});if(error)throw error}toast('تم استيراد المنتجات');await loadAll()}catch(e){toast('فشل الاستيراد: '+(e.message||'ملف غير صالح'))}finally{event.target.value=''}};r.readAsText(f)}
-
-// Veronza auto-update + locked completion notice
-
+function sortCustomers(key){if(customerSort.key===key)customerSort.dir*=-1;else{customerSort.key=key;customerSort.dir=1}renderCustomers()}
+function renderCustomers(){let q=($('customerSearch')?.value||'').toLowerCase();let a=customers.filter(c=>Object.values(c).join(' ').toLowerCase().includes(q));if(customerSort.key)a.sort((x,y)=>{let av=x[customerSort.key],bv=y[customerSort.key];if(customerSort.key==='last_purchase_at'){av=av?new Date(av).getTime():0;bv=bv?new Date(bv).getTime():0}else{av=Number(av||0);bv=Number(bv||0)}return(av-bv)*customerSort.dir});$('customerRows').innerHTML=a.length?a.map(c=>`<tr><td>${c.name||''}</td><td>${c.phone||''}</td><td>${c.orders||0}</td><td>${money(c.total_purchases)}</td><td>${c.last_purchase_at?new Date(c.last_purchase_at).toLocaleString('ar-LY'):''}</td></tr>`).join(''):`<tr><td colspan="5" class="empty">لا يوجد عملاء</td></tr>`}
+function renderOrders(){let a=getOrderDisplayList();$('orderRows').innerHTML=a.length?a.map(o=>`<tr><td><b>${o.order_no||''}</b></td><td>${o.customer||''}</td><td>${o.phone||''}</td><td>${o.address||''}</td><td>${money(o.total)}</td><td><select onchange="updateOrder(${o.id},'status',this.value)"><option ${o.status==='جديد'?'selected':''}>جديد</option><option ${o.status==='مؤكد'?'selected':''}>مؤكد</option><option ${o.status==='ملغي'?'selected':''}>ملغي</option></select></td><td><select onchange="updateOrder(${o.id},'delivery_status',this.value)"><option value="قيد التجهيز" ${o.delivery_status==='قيد التجهيز'?'selected':''}>قيد التجهيز</option><option value="خرج للتوصيل" ${o.delivery_status==='خرج للتوصيل'?'selected':''}>خرج للتوصيل</option><option value="تم التسليم" ${o.delivery_status==='تم التسليم'?'selected':''}>تم التسليم</option></select></td><td>${o.notes||''}</td><td><button class="danger" onclick="deleteOrder(${o.id})">حذف</button></td></tr>`).join(''):`<tr><td colspan="9" class="empty">لا توجد طلبات</td></tr>`}
+function renderReturns(){let a=[...returnsRows].sort((x,y)=>new Date(y.created_at)-new Date(x.created_at));$('returnRows').innerHTML=a.length?a.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString('ar-LY')}</td><td>${r.barcode||''}</td><td>${r.product||''}</td><td>${r.qty||0}</td><td>${money(r.total)}</td><td>${r.customer||''}</td><td>${r.reason||''}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">لا توجد مرتجعات</td></tr>`}
+function clearCustomerFilters(){if($('customerSearch'))$('customerSearch').value='';customerSort={key:null,dir:1};renderCustomers()}
+function renderReports(){let range=$('reportRange')?.value||'all',now=new Date(),a=sales.filter(s=>{let d=new Date(s.created_at);if(range==='today')return d.toDateString()===now.toDateString();if(range==='7')return(now-d)<=7*86400000; if(range==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();return true});let total=a.reduce((x,s)=>x+Number(s.total||0),0),profit=a.reduce((x,s)=>x+Number(s.profit||0),0),qty=a.reduce((x,s)=>x+Number(s.qty||0),0);$('rTotal').textContent=money(total);$('rProfit').textContent=money(profit);$('rQty').textContent=qty.toLocaleString('ar-LY');$('rAvg').textContent=money(a.length?total/a.length:0);$('rInventoryCost').textContent=money(products.reduce((x,p)=>x+Number(p.buy||0)*Number(p.qty||0),0));$('rPotential').textContent=money(products.reduce((x,p)=>x+Number(p.sell||0)*Number(p.qty||0),0));let top={};a.forEach(s=>{let k=s.product||s.barcode||'غير معروف';top[k]=(top[k]||0)+Number(s.qty||0)});let rows=Object.entries(top).sort((x,y)=>y[1]-x[1]).slice(0,20);$('reportRows').innerHTML=rows.length?rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join(''):`<tr><td colspan="2" class="empty">لا توجد مبيعات</td></tr>`}
+function renderAll(){renderProducts();renderOrders();renderReturns();renderCustomers();renderReports();let low=products.filter(p=>Number(p.qty||0)<=Number(p.min||0));$('lowStock').innerHTML=low.length?low.map(p=>`<div class="low-item"><b>${p.name}</b><span>${p.qty} متبقي</span></div>`).join(''):'<div class="empty">لا توجد تنبيهات</div>';let totalSales=sales.reduce((a,s)=>a+Number(s.total||0),0);$('dashSales').textContent=money(totalSales);$('dashProducts').textContent=products.length.toLocaleString('ar-LY');$('dashOrders').textContent=orders.length.toLocaleString('ar-LY');$('dashProfit').textContent=money(sales.reduce((a,s)=>a+Number(s.profit||0),0));}
+function exportData(){let blob=new Blob([JSON.stringify({products,sales,customers,suppliers,orders,returns:returnsRows},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='veronza-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+window.addEventListener('beforeunload',()=>stopRealtime());
 boot();
