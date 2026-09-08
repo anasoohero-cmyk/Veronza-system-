@@ -30,67 +30,46 @@ jobs:
           if n != 1:
               raise SystemExit('BUILD_VERSION update failed')
 
-          # Keep the startup environment light and remove any old custom splash layer.
           s=re.sub(r'<link rel="preload"[^>]+veronza-splash\.jpg[^>]*>','',s,flags=re.I)
           s=re.sub(r'<style[^>]*id=["\']veronza-startup-splash-style["\'][^>]*>.*?</style>','',s,count=1,flags=re.I|re.S)
           s=re.sub(r'<div[^>]*id=["\']veronza-startup-splash["\'][^>]*>.*?</div>','',s,count=1,flags=re.I|re.S)
           s=re.sub(r'<script>\(function\(\)\{function hide\(\).*?</script>','',s,count=1,flags=re.S)
 
           head=re.search(r'<head[^>]*>',s,re.I)
-          if not head:
-              raise SystemExit('head marker not found')
-          required=[
-              '<meta name="theme-color" content="#ffffff">',
-              '<meta name="color-scheme" content="light">',
-              '<meta name="apple-mobile-web-app-capable" content="yes">',
-              '<meta name="apple-mobile-web-app-status-bar-style" content="default">'
-          ]
+          if not head: raise SystemExit('head marker not found')
+          required=['<meta name="theme-color" content="#ffffff">','<meta name="color-scheme" content="light">','<meta name="apple-mobile-web-app-capable" content="yes">','<meta name="apple-mobile-web-app-status-bar-style" content="default">']
           for tag in required:
               if tag not in s:
                   s=s[:head.end()]+tag+s[head.end():]
                   head=re.search(r'<head[^>]*>',s,re.I)
 
           body=re.search(r'<body([^>]*)>',s,re.I)
-          if not body:
-              raise SystemExit('body marker not found')
+          if not body: raise SystemExit('body marker not found')
           attrs=body.group(1)
-          if 'style=' not in attrs.lower():
-              s=s[:body.start()]+'<body'+attrs+' style="background:#fff!important">'+s[body.end():]
-          elif 'background:#fff' not in attrs.replace(' ','').lower():
+          if 'style=' not in attrs.lower() or 'background:#fff' not in attrs.replace(' ','').lower():
               s=s[:body.start()]+'<body'+attrs+' style="background:#fff!important">'+s[body.end():]
           index.write_text(s,encoding='utf-8')
 
           sw=Path('sw.js')
           x=sw.read_text(encoding='utf-8')
           x,n=re.subn(r"const CACHE_NAME='V\d+';",f"const CACHE_NAME='{version}';",x,count=1)
-          if n != 1:
-              raise SystemExit('CACHE_NAME marker not found')
+          if n != 1: raise SystemExit('CACHE_NAME marker not found')
           sw.write_text(x,encoding='utf-8')
 
-          # Repair the backup import path only when the current app does not already contain it.
           app=Path('app.js')
           a=app.read_text(encoding='utf-8')
           if 'async function importData(event)' not in a:
               marker='function exportData(){'
-              if marker not in a:
-                  raise SystemExit('exportData marker not found in app.js')
+              if marker not in a: raise SystemExit('exportData marker not found in app.js')
               code=r'''async function importData(event){
   const file=event.target.files?.[0];
   if(!file)return;
   const clean=row=>{let o={};Object.keys(row||{}).sort().forEach(k=>{if(!['id','user_id','created_at','updated_at','order_no'].includes(k))o[k]=row[k]});return o};
   const key=row=>JSON.stringify(clean(row));
-  const known=(rows)=>new Set((rows||[]).map(key));
+  const known=rows=>new Set((rows||[]).map(key));
   try{
-    const raw=await file.text();
-    const data=JSON.parse(raw);
-    const tables=[
-      ['products',data.products,products,true],
-      ['customers',data.customers,customers,false],
-      ['suppliers',data.suppliers,suppliers,false],
-      ['orders',data.orders,orders,false],
-      ['sales',data.sales,sales,false],
-      ['returns',data.returns,returnsRows,false]
-    ];
+    const data=JSON.parse(await file.text());
+    const tables=[['products',data.products,products,true],['customers',data.customers,customers,false],['suppliers',data.suppliers,suppliers,false],['orders',data.orders,orders,false],['sales',data.sales,sales,false],['returns',data.returns,returnsRows,false]];
     if(!tables.some(([,rows])=>Array.isArray(rows)))throw Error('ملف النسخة الاحتياطية غير صالح');
     if(!sb)throw Error('سجّل الدخول أولاً');
     let added=0,updated=0;
@@ -98,8 +77,7 @@ jobs:
       if(!Array.isArray(rows)||!rows.length)continue;
       if(isProducts){
         for(const original of rows){
-          const row=clean(original);
-          const barcode=String(row.barcode||'').trim();
+          const row=clean(original),barcode=String(row.barcode||'').trim();
           if(!barcode)continue;
           row.barcode=barcode;
           const {data:up,error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'}).select('id').maybeSingle();
@@ -109,8 +87,7 @@ jobs:
       }else{
         const seen=known(current);
         for(const original of rows){
-          const row=clean(original);
-          const fingerprint=key(row);
+          const row=clean(original),fingerprint=key(row);
           if(seen.has(fingerprint))continue;
           const {error}=await sb.from(table).insert(row);
           if(error)throw Error(table+': '+error.message);
@@ -127,91 +104,9 @@ jobs:
               a=a.replace(marker,code+marker,1)
               app.write_text(a,encoding='utf-8')
 
-          # Restore this workflow file before committing so the repository keeps its original workflow.
-          workflow=Path('.github/workflows/finalize-v67.yml')
-          w=workflow.read_text(encoding='utf-8')
-          w=w.replace("          # Restore this workflow file before committing so the repository keeps its original workflow.\n", "") if False else w
-          original='''name: Finalize Veronza release
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: write
-
-jobs:
-  finalize:
-    if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Finalize Veronza release
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          index=Path('index.html')
-          s=index.read_text(encoding='utf-8')
-          m=re.search(r"const BUILD_VERSION='V(\\d+)';", s)
-          if not m:
-              raise SystemExit('BUILD_VERSION marker not found')
-          next_version=int(m.group(1))+1
-          version=f'V{next_version}'
-          s,n=re.subn(r"const BUILD_VERSION='V\\d+';", f"const BUILD_VERSION='{version}';", s, count=1)
-          if n != 1:
-              raise SystemExit('BUILD_VERSION update failed')
-
-          # Keep the startup environment light and remove any old custom splash layer.
-          s=re.sub(r'<link rel="preload"[^>]+veronza-splash\\.jpg[^>]*>','',s,flags=re.I)
-          s=re.sub(r'<style[^>]*id=["\\']veronza-startup-splash-style["\\'][^>]*>.*?</style>','',s,count=1,flags=re.I|re.S)
-          s=re.sub(r'<div[^>]*id=["\\']veronza-startup-splash["\\'][^>]*>.*?</div>','',s,count=1,flags=re.I|re.S)
-          s=re.sub(r'<script>\\(function\\(\\)\\{function hide\\(\\).*?</script>','',s,count=1,flags=re.S)
-
-          head=re.search(r'<head[^>]*>',s,re.I)
-          if not head:
-              raise SystemExit('head marker not found')
-          required=[
-              '<meta name="theme-color" content="#ffffff">',
-              '<meta name="color-scheme" content="light">',
-              '<meta name="apple-mobile-web-app-capable" content="yes">',
-              '<meta name="apple-mobile-web-app-status-bar-style" content="default">'
-          ]
-          for tag in required:
-              if tag not in s:
-                  s=s[:head.end()]+tag+s[head.end():]
-                  head=re.search(r'<head[^>]*>',s,re.I)
-
-          body=re.search(r'<body([^>]*)>',s,re.I)
-          if not body:
-              raise SystemExit('body marker not found')
-          attrs=body.group(1)
-          if 'style=' not in attrs.lower():
-              s=s[:body.start()]+'<body'+attrs+' style="background:#fff!important">'+s[body.end():]
-          elif 'background:#fff' not in attrs.replace(' ','').lower():
-              s=s[:body.start()]+'<body'+attrs+' style="background:#fff!important">'+s[body.end():]
-          index.write_text(s,encoding='utf-8')
-
-          sw=Path('sw.js')
-          x=sw.read_text(encoding='utf-8')
-          x,n=re.subn(r"const CACHE_NAME='V\\d+';",f"const CACHE_NAME='{version}';",x,count=1)
-          if n != 1:
-              raise SystemExit('CACHE_NAME marker not found')
-          sw.write_text(x,encoding='utf-8')
-          print(f'Finalized {version}')
-          PY
-      - name: Commit release version
-        run: |
-          git add index.html sw.js
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Release Veronza ${{ github.sha }}"
-          git pull --rebase origin main
-          git push
-'''
-          workflow.write_text(original,encoding='utf-8')
-
+          # Restore the original workflow from the parent commit before pushing the repair.
+          import subprocess
+          subprocess.run(['git','show','HEAD^:.github/workflows/finalize-v67.yml'],check=True,stdout=open('.github/workflows/finalize-v67.yml','wb'))
           PY
       - name: Commit release version
         run: |
