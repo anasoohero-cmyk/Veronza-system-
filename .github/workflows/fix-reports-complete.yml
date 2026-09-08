@@ -1,0 +1,79 @@
+name: Complete Veronza Reports Repair
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-reports-complete.yml'
+  workflow_dispatch:
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair reports HTML and renderer
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          index = Path('index.html')
+          s = index.read_text(encoding='utf-8')
+
+          start = s.find('<section id="reports"')
+          if start < 0:
+              raise SystemExit('reports section not found')
+          end = s.find('</section>', start)
+          if end < 0:
+              raise SystemExit('reports section end not found')
+          end += len('</section>')
+
+          new_section = '''<section id="reports" class="view"><h2>التقارير</h2><div class="panel"><div class="filters"><label>الفترة <select id="reportPeriod" onchange="renderReports()"><option value="all">كل المبيعات</option><option value="today">اليوم</option><option value="7d">آخر 7 أيام</option><option value="month">هذا الشهر</option></select></label><span id="reportPeriodLabel">كل المبيعات</span></div></div><div class="cards"><div class="card"><span>إجمالي المبيعات</span><b id="rptTotal">0</b></div><div class="card"><span>إجمالي الربح</span><b id="rptProfit">0</b></div><div class="card"><span>عدد القطع المباعة</span><b id="rptQty">0</b></div><div class="card"><span>متوسط العملية</span><b id="rptAvg">0</b></div><div class="card"><span>قيمة المخزون بالشراء</span><b id="rptStockCost">0</b></div><div class="card"><span>قيمة المخزون بسعر البيع</span><b id="rptStockPotential">0</b></div></div><div class="panel"><h3>أفضل المنتجات حسب المبيعات</h3><div class="tablewrap"><table><thead><tr><th>المنتج</th><th>القطع المباعة</th></tr></thead><tbody id="reportRows"></tbody></table></div></div></section>'''
+          s = s[:start] + new_section + s[end:]
+          index.write_text(s, encoding='utf-8')
+
+          app = Path('app.js')
+          js = app.read_text(encoding='utf-8')
+          start = js.find('function renderReports(){')
+          if start < 0:
+              raise SystemExit('renderReports not found')
+          brace = js.find('{', start)
+          depth = 0
+          quote = None
+          esc = False
+          end = None
+          for i in range(brace, len(js)):
+              c = js[i]
+              if quote:
+                  if esc: esc = False
+                  elif c == '\\': esc = True
+                  elif c == quote: quote = None
+              else:
+                  if c in "'\"`": quote = c
+                  elif c == '{': depth += 1
+                  elif c == '}':
+                      depth -= 1
+                      if depth == 0:
+                          end = i + 1
+                          break
+          if end is None:
+              raise SystemExit('renderReports end not found')
+
+          new_fn = '''function renderReports(){let period=$('reportPeriod')?.value||'all',now=new Date(),a=sales.filter(s=>{let d=new Date(s.created_at);if(Number.isNaN(d.getTime()))return false;if(period==='today')return d.toDateString()===now.toDateString();if(period==='7d')return d<=now&&(now-d)<=7*86400000;if(period==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();return true});let total=a.reduce((x,s)=>x+Number(s.total||0),0),profit=a.reduce((x,s)=>x+Number(s.profit||0),0),qty=a.reduce((x,s)=>x+Number(s.qty||0),0),rTotal=$('rptTotal'),rProfit=$('rptProfit'),rQty=$('rptQty'),rAvg=$('rptAvg'),rInventoryCost=$('rptStockCost'),rPotential=$('rptStockPotential'),reportRows=$('reportRows'),label=$('reportPeriodLabel');if(rTotal)rTotal.textContent=money(total);if(rProfit)rProfit.textContent=money(profit);if(rQty)rQty.textContent=qty.toLocaleString('ar-LY');if(rAvg)rAvg.textContent=money(a.length?total/a.length:0);if(rInventoryCost)rInventoryCost.textContent=money(products.reduce((x,p)=>x+Number(p.buy||0)*Number(p.qty||0),0));if(rPotential)rPotential.textContent=money(products.reduce((x,p)=>x+Number(p.sell||0)*Number(p.qty||0),0));if(label)label.textContent=period==='today'?'اليوم':period==='7d'?'آخر 7 أيام':period==='month'?'هذا الشهر':'كل المبيعات';let top={};a.forEach(s=>{let k=s.product||s.barcode||'غير معروف';top[k]=(top[k]||0)+Number(s.qty||0)});let rows=Object.entries(top).sort((x,y)=>y[1]-x[1]).slice(0,20);if(reportRows)reportRows.innerHTML=rows.length?rows.map(([k,v])=>`<tr><td>${String(k).replace(/[<>]/g,'')}</td><td>${v}</td></tr>`).join(''):`<tr><td colspan="2" class="empty">لا توجد مبيعات</td></tr>`}'''
+          app.write_text(js[:start] + new_fn + js[end:], encoding='utf-8')
+          print('COMPLETE REPORTS REPAIR APPLIED')
+          print('Old report ID collision rQty removed from reports section; return rQty preserved.')
+          PY
+      - name: Commit repair and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html app.js
+          git commit -m 'Complete reports repair' || true
+          git push
+          git rm .github/workflows/fix-reports-complete.yml
+          git commit -m 'Remove temporary reports repair workflow'
+          git push
