@@ -17,8 +17,6 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-
           p=Path('app.js')
           s=p.read_text(encoding='utf-8')
           start=s.find('async function importData(event){')
@@ -26,7 +24,6 @@ jobs:
           end=s.find(marker,start)
           if start < 0 or end < 0:
               raise SystemExit('importData boundaries not found')
-
           new=r'''async function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);let tables=['products','sales','customers','suppliers','orders','returns'];if(!tables.some(t=>Array.isArray(d[t])))throw Error('ملف غير صالح');let clean=(row)=>{let x={};Object.entries(row||{}).forEach(([k,v])=>{if(!['id','user_id','created_at','updated_at'].includes(k))x[k]=v});return x};let fingerprints=(row)=>JSON.stringify(Object.keys(clean(row)).sort().map(k=>[k,clean(row)[k]]));let existing={products,sales,customers,suppliers,orders,returns:returnsRows};
           if(Array.isArray(d.products)){for(const p of d.products){let row=clean(p);let barcode=String(row.barcode||'').trim();if(!barcode)barcode=await generateSequentialBarcode();row.barcode=barcode;let {error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'});if(error)throw error}}
           for(const name of ['customers','suppliers','orders','sales','returns']){let rows=Array.isArray(d[name])?d[name]:[];if(!rows.length)continue;let table=name==='returns'?'returns':name;let seen=new Set((existing[name]||[]).map(fingerprints));for(const raw of rows){let row=clean(raw);if(name==='orders')delete row.order_no;let fp=fingerprints(row);if(seen.has(fp))continue;let {error}=await sb.from(table).insert(row);if(error)throw error;seen.add(fp)}}
