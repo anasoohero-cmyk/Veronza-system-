@@ -1,9 +1,20 @@
-const CACHE_NAME='V76';
-// V76 update detection test
+const CACHE_NAME='V77';
+// V77 real update progress
 const SHELL=['./','./index.html','./app.js','./sw.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL.map(url=>new Request(url,{cache:'reload'})))));
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE_NAME);
+    let done=0;
+    for(const url of SHELL){
+      const response=await fetch(new Request(url,{cache:'reload'}));
+      if(!response.ok) throw new Error('Failed to update '+url);
+      await cache.put(url,response.clone());
+      done++;
+      const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+      clients.forEach(client=>client.postMessage({type:'UPDATE_PROGRESS',done,total:SHELL.length,detail:`جاري تحديث ملفات Veronza (${done}/${SHELL.length})`}));
+    }
+  })());
 });
 
 self.addEventListener('activate',event=>{
