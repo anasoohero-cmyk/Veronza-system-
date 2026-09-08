@@ -1,4 +1,4 @@
-name: Finalize V75
+name: Finalize V76
 
 on:
   push:
@@ -12,34 +12,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Remove Veronza startup splash and finalize V75
+      - name: Finalize Veronza V76
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V75';", s, count=1)
-
-          # Remove the in-page splash completely. Veronza should start directly on its normal white UI.
+          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V76';", s, count=1)
+          # Keep Veronza free of the old startup splash/preload.
           s=re.sub(r'<link rel="preload" as="image" href="\./veronza-splash\.jpg">\s*', '', s, count=1)
           s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>\s*', '', s, count=1, flags=re.S)
           s=re.sub(r'<div id="veronza-startup-splash"[^>]*>.*?</div>\s*', '', s, count=1, flags=re.S)
           s=re.sub(r'<script>\(function\(\)\{function hide\(\).*?</script>\s*', '', s, count=1, flags=re.S)
           p.write_text(s,encoding='utf-8')
-
           sw=Path('sw.js')
           x=sw.read_text(encoding='utf-8')
-          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V75';",x,count=1)
+          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V76';",x,count=1)
           x=x.replace("'./veronza-splash.jpg',", "")
           sw.write_text(x,encoding='utf-8')
           PY
-      - name: Commit V75 no splash
+      - name: Commit V76
         run: |
           git add index.html sw.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Remove Veronza startup black-screen splash"
+          git commit -m "Release Veronza V76 update detection"
           git pull --rebase origin main
           git push
