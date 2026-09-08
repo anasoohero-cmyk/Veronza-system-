@@ -19,17 +19,17 @@ jobs:
           from pathlib import Path
           p=Path('app.js')
           s=p.read_text(encoding='utf-8')
-          start=s.find('async function importData(event){')
-          marker='\n\n// Veronza auto-update + locked completion notice'
-          end=s.find(marker,start)
-          if start < 0 or end < 0:
-              raise SystemExit('importData boundaries not found')
-          new=r'''async function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);let tables=['products','sales','customers','suppliers','orders','returns'];if(!tables.some(t=>Array.isArray(d[t])))throw Error('ملف غير صالح');let clean=(row)=>{let x={};Object.entries(row||{}).forEach(([k,v])=>{if(!['id','user_id','created_at','updated_at'].includes(k))x[k]=v});return x};let fingerprints=(row)=>JSON.stringify(Object.keys(clean(row)).sort().map(k=>[k,clean(row)[k]]));let existing={products,sales,customers,suppliers,orders,returns:returnsRows};
+          if 'async function importData(event)' in s:
+              raise SystemExit('importData already exists; refusing duplicate repair')
+          marker='\nwindow.addEventListener(\'beforeunload\',()=>stopRealtime());'
+          if marker not in s:
+              raise SystemExit('beforeunload insertion marker not found')
+          new=r'''\nasync function importData(event){let f=event.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let d=JSON.parse(r.result);let names=['products','sales','customers','suppliers','orders','returns'];if(!names.some(t=>Array.isArray(d[t])))throw Error('ملف غير صالح');let clean=row=>{let x={};Object.entries(row||{}).forEach(([k,v])=>{if(!['id','user_id','created_at','updated_at'].includes(k))x[k]=v});return x};let fp=row=>JSON.stringify(Object.keys(clean(row)).sort().map(k=>[k,clean(row)[k]]));
           if(Array.isArray(d.products)){for(const p of d.products){let row=clean(p);let barcode=String(row.barcode||'').trim();if(!barcode)barcode=await generateSequentialBarcode();row.barcode=barcode;let {error}=await sb.from('products').upsert(row,{onConflict:'user_id,barcode'});if(error)throw error}}
-          for(const name of ['customers','suppliers','orders','sales','returns']){let rows=Array.isArray(d[name])?d[name]:[];if(!rows.length)continue;let table=name==='returns'?'returns':name;let seen=new Set((existing[name]||[]).map(fingerprints));for(const raw of rows){let row=clean(raw);if(name==='orders')delete row.order_no;let fp=fingerprints(row);if(seen.has(fp))continue;let {error}=await sb.from(table).insert(row);if(error)throw error;seen.add(fp)}}
+          let existing={sales,customers,suppliers,orders,returns:returnsRows};for(const name of ['customers','suppliers','orders','sales','returns']){let rows=Array.isArray(d[name])?d[name]:[];if(!rows.length)continue;let seen=new Set((existing[name]||[]).map(fp));for(const raw of rows){let row=clean(raw);if(name==='orders')delete row.order_no;let key=fp(row);if(seen.has(key))continue;let {error}=await sb.from(name).insert(row);if(error)throw error;seen.add(key)}}
           await loadAll();toast('تم استيراد البيانات بنجاح');}catch(e){console.error(e);toast('فشل الاستيراد: '+(e.message||'ملف غير صالح'))}finally{event.target.value=''}};r.readAsText(f)}
 '''
-          p.write_text(s[:start]+new+s[end:],encoding='utf-8')
+          p.write_text(s.replace(marker,new+marker,1),encoding='utf-8')
           PY
       - name: Commit repair and remove temporary workflow
         run: |
