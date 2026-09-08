@@ -1,0 +1,37 @@
+name: Repair pagination tie-breaker
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add stable id tie-breaker to paged reads
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app.js')
+          s = p.read_text(encoding='utf-8')
+          old = "async function fetchAllRows(table,orderColumn='created_at'){const pageSize=1000;let all=[];for(let from=0;;from+=pageSize){const {data,error}=await sb.from(table).select('*').order(orderColumn,{ascending:false}).range(from,from+pageSize-1);if(error)throw error;const rows=data||[];all.push(...rows);if(rows.length<pageSize)break}return all}"
+          new = "async function fetchAllRows(table,orderColumn='created_at'){const pageSize=1000;let all=[];for(let from=0;;from+=pageSize){let q=sb.from(table).select('*').order(orderColumn,{ascending:false});if(orderColumn!=='id')q=q.order('id',{ascending:false});const {data,error}=await q.range(from,from+pageSize-1);if(error)throw error;const rows=data||[];all.push(...rows);if(rows.length<pageSize)break}return all}"
+          if old not in s:
+              raise SystemExit('Target pagination function not found; no change made')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          git diff --check
+          git add app.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Stabilize paginated data loading" || exit 0
+          git push
+          git rm .github/workflows/repair-pagination-tiebreaker.yml
+          git commit -m "Remove temporary pagination repair workflow"
+          git push
