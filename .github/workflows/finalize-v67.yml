@@ -1,4 +1,4 @@
-name: Finalize V79
+name: Finalize V80
 
 on:
   push:
@@ -12,31 +12,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Remove Veronza startup logo and release V79
+      - name: Harden Veronza iOS startup and release V80
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          s,n=re.subn(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V79';", s, count=1)
+          s,n=re.subn(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V80';", s, count=1)
           if n != 1: raise SystemExit('BUILD_VERSION marker not found')
-          s=re.sub(r'<link rel="preload" as="image" href="\./veronza-splash\.jpg">','',s)
-          s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>','',s,count=1,flags=re.S)
-          s=re.sub(r'<div id="veronza-startup-splash".*?</div>','',s,count=1,flags=re.S)
+          # Ensure no custom startup/splash layer or startup image preload remains.
+          s=re.sub(r'<link rel="preload"[^>]+veronza-splash\.jpg[^>]*>','',s,flags=re.I)
+          s=re.sub(r'<style[^>]*id=["\']veronza-startup-splash-style["\'][^>]*>.*?</style>','',s,count=1,flags=re.I|re.S)
+          s=re.sub(r'<div[^>]*id=["\']veronza-startup-splash["\'][^>]*>.*?</div>','',s,count=1,flags=re.I|re.S)
           s=re.sub(r'<script>\(function\(\)\{function hide\(\).*?</script>','',s,count=1,flags=re.S)
+          # Make the browser/PWA launch environment explicitly light before app code executes.
+          head=re.search(r'<head[^>]*>',s,re.I)
+          if not head: raise SystemExit('head marker not found')
+          tags='''<meta name="theme-color" content="#ffffff"><meta name="color-scheme" content="light"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">'''
+          s=s[:head.end()]+tags+s[head.end():]
+          body=re.search(r'<body([^>]*)>',s,re.I)
+          if not body: raise SystemExit('body marker not found')
+          attrs=body.group(1)
+          if 'style=' not in attrs.lower():
+              s=s[:body.start()]+'<body'+attrs+' style="background:#fff!important">'+s[body.end():]
           p.write_text(s,encoding='utf-8')
           sw=Path('sw.js')
           x=sw.read_text(encoding='utf-8')
-          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V79';",x,count=1)
+          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V80';",x,count=1)
           sw.write_text(x,encoding='utf-8')
           PY
-      - name: Commit V79
+      - name: Commit V80
         run: |
           git add index.html sw.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Remove startup logo screen"
+          git commit -m "Harden iOS startup background"
           git pull --rebase origin main
           git push
