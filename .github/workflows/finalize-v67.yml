@@ -1,4 +1,4 @@
-name: Finalize V78
+name: Finalize V79
 
 on:
   push:
@@ -12,38 +12,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Optimize Veronza startup and release V78
+      - name: Remove Veronza startup logo and release V79
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          s,n=re.subn(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V78';", s, count=1)
+          s,n=re.subn(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V79';", s, count=1)
           if n != 1: raise SystemExit('BUILD_VERSION marker not found')
-          s=s.replace('<link rel="preload" as="image" href="./veronza-splash.jpg">','')
-          css='''<style id="veronza-startup-splash-style">html,body{background:#fff!important;color-scheme:light}#veronza-startup-splash{position:fixed;inset:0;z-index:2147483646;background:#fff;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}#veronza-startup-splash img{width:min(46vw,220px);height:auto;display:block;opacity:.12}#veronza-startup-splash.vz-hide{opacity:0;visibility:hidden;pointer-events:none}</style>'''
-          if 'id="veronza-startup-splash-style"' in s:
-              s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>',css,s,count=1,flags=re.S)
+          s=re.sub(r'<link rel="preload" as="image" href="\./veronza-splash\.jpg">','',s)
+          s=re.sub(r'<style id="veronza-startup-splash-style">.*?</style>','',s,count=1,flags=re.S)
           s=re.sub(r'<div id="veronza-startup-splash".*?</div>','',s,count=1,flags=re.S)
-          m=re.search(r'<body[^>]*>',s,re.I)
-          if not m: raise SystemExit('body marker not found')
-          splash='<div id="veronza-startup-splash" aria-hidden="true"><img src="./veronza-splash.jpg" alt=""></div>'
-          s=s[:m.end()]+splash+s[m.end():]
-          end='''<script>(function(){function hide(){var e=document.getElementById('veronza-startup-splash');if(e){requestAnimationFrame(function(){e.classList.add('vz-hide');setTimeout(function(){e.remove()},160)})}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hide,{once:true});else hide();})();</script>'''
-          s=s.replace('</body>',end+'</body>',1)
+          s=re.sub(r'<script>\(function\(\)\{function hide\(\).*?</script>','',s,count=1,flags=re.S)
           p.write_text(s,encoding='utf-8')
           sw=Path('sw.js')
           x=sw.read_text(encoding='utf-8')
-          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V78';",x,count=1)
+          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V79';",x,count=1)
           sw.write_text(x,encoding='utf-8')
           PY
-      - name: Commit V78
+      - name: Commit V79
         run: |
           git add index.html sw.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Optimize Veronza startup speed"
+          git commit -m "Remove startup logo screen"
           git pull --rebase origin main
           git push
