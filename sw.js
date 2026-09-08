@@ -1,4 +1,4 @@
-const CACHE_NAME='V81';
+const CACHE_NAME='V82';
 // V77 real update progress
 const SHELL=['./','./index.html','./app.js','./sw.js','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 
