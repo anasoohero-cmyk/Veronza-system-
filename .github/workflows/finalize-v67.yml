@@ -12,90 +12,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Finalize Veronza V77 with real update progress
+      - name: Set Veronza version V77
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          s=re.sub(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V77';", s, count=1)
-
-          # Replace the old staged/fake progress with progress driven by real SW install messages.
-          new_status = r'''function showUpdatingStatus(){
-    let box=document.getElementById('vzUpdateProgress');
-    if(!box){
-      box=document.createElement('div');box.id='vzUpdateProgress';
-      box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');
-      box.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;pointer-events:auto;touch-action:none;overscroll-behavior:none';
-      box.innerHTML='<div style="font-size:22px;font-weight:800;margin-bottom:18px">جار تحديث Veronza...</div><div id="vzUpdatePct" style="font-size:42px;font-weight:900;line-height:1">0%</div><div id="vzUpdateDetail" style="margin-top:14px;opacity:.7">جاري تجهيز التحديث...</div>';
-      document.body.appendChild(box);
-    }
-    setPageLocked(true);
-    return box;
-  }
-
-  function setRealUpdateProgress(done,total,detail){
-    const box=showUpdatingStatus();
-    const pct=document.getElementById('vzUpdatePct');
-    const msg=document.getElementById('vzUpdateDetail');
-    const safeTotal=Math.max(1,total||1);
-    const safeDone=Math.max(0,Math.min(done||0,safeTotal));
-    // Reserve 90% for actual download/install; 100% is only set after controllerchange.
-    const value=Math.min(90,Math.round((safeDone/safeTotal)*90));
-    if(pct)pct.textContent=value+'%';
-    if(msg)msg.textContent=detail||('تم تحميل '+safeDone+' من '+safeTotal+' ملفات');
-    return box;
-  }
-
-  if(!window.__veronzaRealProgressListener){
-    window.__veronzaRealProgressListener=true;
-    navigator.serviceWorker.addEventListener('message',e=>{
-      const d=e.data||{};
-      if(d.type==='UPDATE_PROGRESS') setRealUpdateProgress(d.done,d.total,d.detail);
-    });
-  }
-'''
-          # Keep the existing function name but replace its full body up to the next function declaration.
-          if 'function showUpdatingStatus()' not in s:
-              raise SystemExit('showUpdatingStatus not found')
-          s=re.sub(r'function showUpdatingStatus\(\)\{.*?\n\s*\}\n\s*function ', new_status+'\n  function ', s, count=1, flags=re.S)
-
-          # Ensure the explicit update click starts at 0% and the activation handler is the only path to 100%.
-          s=s.replace("showUpdatingStatus();", "showUpdatingStatus();", 1)
-          s=s.replace("showProgress(100);", "setRealUpdateProgress(1,1,'اكتمل تثبيت التحديث');", 1)
+          import re
+          s,n=re.subn(r"const BUILD_VERSION='V\d+';", "const BUILD_VERSION='V77';", s, count=1)
+          if n != 1:
+              raise SystemExit('BUILD_VERSION marker not found exactly once')
           p.write_text(s,encoding='utf-8')
-
-          sw=Path('sw.js')
-          x=sw.read_text(encoding='utf-8')
-          x=re.sub(r"const CACHE_NAME='V\d+';","const CACHE_NAME='V77';",x,count=1)
-          x=x.replace("'./veronza-splash.jpg',", "")
-          # Replace install with per-file fetch/cache progress. This is actual progress of the SW shell install.
-          install = r'''self.addEventListener('install',event=>{
-  event.waitUntil((async()=>{
-    const cache=await caches.open(CACHE_NAME);
-    let done=0;
-    const total=SHELL.length;
-    for(const url of SHELL){
-      const response=await fetch(new Request(url,{cache:'reload'}));
-      if(!response.ok) throw new Error('Failed to cache '+url);
-      await cache.put(url,response.clone());
-      done++;
-      const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
-      clients.forEach(client=>client.postMessage({type:'UPDATE_PROGRESS',done,total,detail:`جاري تحديث ملفات Veronza (${done}/${total})`}));
-    }
-  })());
-});'''
-          x=re.sub(r"self\.addEventListener\('install',event=>\{.*?\n\}\);", install, x, count=1, flags=re.S)
-          sw.write_text(x,encoding='utf-8')
           PY
       - name: Commit V77
         run: |
-          git add index.html sw.js
+          git add index.html
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Make Veronza update progress real"
+          git commit -m "Release Veronza V77"
           git pull --rebase origin main
           git push
