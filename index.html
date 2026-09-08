@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
+<head><meta name="theme-color" content="#ffffff"><meta name="color-scheme" content="light"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Veronza | Shoes & Bag</title>
@@ -454,7 +454,7 @@ transition:transform .2s ease,opacity .2s ease;opacity:0;pointer-events:none}
 
 
 </head>
-<body><div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
+<body style="background:#fff!important"><div id="setup"><div class="modal"><h2>ربط Veronza بقاعدة البيانات</h2><p>الاتصال بـ Supabase مدمج وآمن داخل التطبيق. لا تحتاج لإدخال بيانات الاتصال.</p><input id="cfgUrl" placeholder="الاتصال مدمج تلقائيًا" disabled><input id="cfgKey" placeholder="المفتاح العام مدمج تلقائيًا" disabled><button class="primary" style="width:100%;margin-top:8px" onclick="saveConfig()">متابعة</button><div class="hint">بيانات الاتصال الأساسية مدمجة في نسخة Veronza.</div></div></div>
 <div id="login"><div class="modal"><h2>تسجيل الدخول إلى Veronza</h2><input id="loginEmail" type="email" placeholder="البريد الإلكتروني"><input id="loginPassword" type="password" placeholder="كلمة المرور"><button class="primary" style="width:100%;margin-top:8px" onclick="login()">دخول</button><button style="width:100%;margin-top:8px" onclick="passkeyLogin()">🔐 دخول سريع بـ Face ID</button><button style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button><div id="loginMsg" class="hint"></div></div></div>
 <header class="top">
  <div class="topbar">
@@ -741,7 +741,7 @@ function vzGo(id){
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
-  const BUILD_VERSION='V79';
+  const BUILD_VERSION='V80';
   const PENDING_KEY='veronza_pending_update_version';
   const APPLIED_KEY='veronza_applied_sw_version';
   const COMPLETE_KEY='veronza_update_complete_pending';
